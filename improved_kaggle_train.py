@@ -99,15 +99,15 @@ class ImprovedConfig:
     """Improved configuration optimized for Kaggle GPU memory constraints."""
     
     # Model architecture - increased for better performance with T5
-    hidden_size: int = 768  # Increased for better representation
-    num_hidden_layers: int = 8  # Increased for more capacity
-    num_attention_heads: int = 12  # Increased for better attention
-    intermediate_size: int = 3072  # Increased feedforward size
-    max_position_embeddings: int = 512  # Increased position embeddings
+    hidden_size: int = 768 # Increased for better representation
+    num_hidden_layers: int = 8 # Increased for more capacity
+    num_attention_heads: int = 12 # Increased for better attention
+    intermediate_size: int = 3072 # Increased feedforward size
+    max_position_embeddings: int = 512 # Increased position embeddings
     
     # Sequence lengths - increased for longer sequences
-    max_source_length: int = 128  # Increased for longer input sequences
-    max_target_length: int = 128  # Increased for longer output sequences
+    max_source_length: int = 128 # Increased for longer input sequences
+    max_target_length: int = 128 # Increased for longer output sequences
     
     # Dropout parameters - optimized for smaller model
     hidden_dropout_prob: float = 0.1
@@ -117,54 +117,54 @@ class ImprovedConfig:
     # Special tokens
     pad_token_id: int = 0
     unk_token_id: int = 1
-    bos_token_id: int = 2  # Beginning of sequence
-    eos_token_id: int = 3  # End of sequence
+    bos_token_id: int = 2 # Beginning of sequence
+    eos_token_id: int = 3 # End of sequence
     
     # Training parameters - optimized for Kaggle performance
-    learning_rate: float = 1e-4  # Higher LR now that stability is fixed
-    min_learning_rate: float = 1e-7  # Reasonable minimum LR
-    batch_size: int = 6  # Increased for Kaggle GPU memory (usually 16GB)
-    num_epochs: int = 20  # Fewer epochs for faster completion on Kaggle
-    warmup_steps: int = 300  # Shorter warmup for faster start
-    weight_decay: float = 0.01  # Standard weight decay for T5
-    gradient_clip_norm: float = 1.0  # Standard gradient clipping for T5
+    learning_rate: float = 1e-4 # Higher LR now that stability is fixed
+    min_learning_rate: float = 1e-7 # Reasonable minimum LR
+    batch_size: int = 6 # Increased for Kaggle GPU memory (usually 16GB)
+    num_epochs: int = 20 # Fewer epochs for faster completion on Kaggle
+    warmup_steps: int = 300 # Shorter warmup for faster start
+    weight_decay: float = 0.01 # Standard weight decay for T5
+    gradient_clip_norm: float = 1.0 # Standard gradient clipping for T5
     
     # Learning rate scheduler parameters
-    scheduler_type: str = "cosine_with_restarts"  # cosine_with_restarts, linear, cosine
-    cosine_restarts: int = 2  # Number of cosine restarts
-    scheduler_warmup_ratio: float = 0.1  # Warmup as ratio of total steps
+    scheduler_type: str = "cosine_with_restarts" # cosine_with_restarts, linear, cosine
+    cosine_restarts: int = 2 # Number of cosine restarts
+    scheduler_warmup_ratio: float = 0.1 # Warmup as ratio of total steps
     
     # Model saving
     model_save_path: str = "./improved_checkpoints"
     save_every_n_steps: int = 500
     
     # Pre-trained T5 model - using even smaller model for stability
-    pretrained_model_name: str = "google/mt5-small"  # Multilingual T5 that supports Odia
-    use_pretrained_t5: bool = True  # Use pre-trained T5 model
-    vocab_size: int = 250112  # mT5 vocab size, will be updated from tokenizer
+    pretrained_model_name: str = "google/mt5-small" # Multilingual T5 that supports Odia
+    use_pretrained_t5: bool = True # Use pre-trained T5 model
+    vocab_size: int = 250112 # mT5 vocab size, will be updated from tokenizer
     
     # Emergency fallback options
-    emergency_fallback_cpu: bool = True  # Fall back to CPU if GPU issues persist
-    emergency_fallback_model: str = "t5-small"  # Fallback to simpler model
-    force_cpu_training: bool = False  # Force CPU training for debugging
+    emergency_fallback_cpu: bool = True # Fall back to CPU if GPU issues persist
+    emergency_fallback_model: str = "t5-small" # Fallback to simpler model
+    force_cpu_training: bool = False # Force CPU training for debugging
     
     # T5-specific parameters
-    freeze_t5_layers: int = 2  # Freeze first 2 layers to save memory
-    t5_dropout: float = 0.1  # Dropout for T5 layers
+    freeze_t5_layers: int = 2 # Freeze first 2 layers to save memory
+    t5_dropout: float = 0.1 # Dropout for T5 layers
     
     # RoPE (Rotary Position Embedding) parameters
-    use_rope: bool = True  # Use RoPE instead of standard positional embeddings
-    rope_theta: float = 10000.0  # Base frequency for RoPE
-    rope_scaling: Optional[str] = None  # Scaling method for RoPE (None, 'linear', 'dynamic')
+    use_rope: bool = True # Use RoPE instead of standard positional embeddings
+    rope_theta: float = 10000.0 # Base frequency for RoPE
+    rope_scaling: Optional[str] = None # Scaling method for RoPE (None, 'linear', 'dynamic')
     
     # Advanced training features
-    use_mixed_precision: bool = False  # Disable mixed precision for stability (can re-enable later)
-    accumulate_grad_batches: int = 4  # Reduced accumulation for faster updates (4 * 4 = 16 effective)
-    label_smoothing: float = 0.1  # Label smoothing for better generalization
+    use_mixed_precision: bool = False # Disable mixed precision for stability (can re-enable later)
+    accumulate_grad_batches: int = 4 # Reduced accumulation for faster updates (4 * 4 = 16 effective)
+    label_smoothing: float = 0.1 # Label smoothing for better generalization
     
     # Multi-GPU support
-    use_data_parallel: bool = True  # Enable DataParallel for multiple GPUs
-    device_ids: list = None  # Will be auto-detected
+    use_data_parallel: bool = True # Enable DataParallel for multiple GPUs
+    device_ids: list = None # Will be auto-detected
 
 @dataclass
 class DataConfig:
@@ -177,8 +177,8 @@ class DataConfig:
     
     # Data processing
     min_sentence_length: int = 3
-    max_sentence_length: int = 200  # Increased to handle longer sequences
-    train_test_split: float = 0.8  # 80% train, 10% val, 10% test
+    max_sentence_length: int = 200 # Increased to handle longer sequences
+    train_test_split: float = 0.8 # 80% train, 10% val, 10% test
     val_split: float = 0.1
     
     # Data augmentation
@@ -212,7 +212,7 @@ class ImprovedTokenizer:
                 # Set special tokens for T5
                 self.config.pad_token_id = self.tokenizer.pad_token_id
                 self.config.unk_token_id = self.tokenizer.unk_token_id
-                self.config.bos_token_id = self.tokenizer.pad_token_id  # T5 doesn't use BOS, use PAD
+                self.config.bos_token_id = self.tokenizer.pad_token_id # T5 doesn't use BOS, use PAD
                 self.config.eos_token_id = self.tokenizer.eos_token_id
                 
                 print(f"Pre-trained mT5 tokenizer loaded successfully")
@@ -221,19 +221,19 @@ class ImprovedTokenizer:
                 test_odia = "ମୁଁ ଭଲ ଅଛି"
                 test_tokens = self.tokenizer.encode(test_odia)
                 test_decoded = self.tokenizer.decode(test_tokens, skip_special_tokens=True)
-                print(f"   Odia test: '{test_odia}' -> tokens: {test_tokens[:5]}... -> '{test_decoded}'")
+                print(f" Odia test: '{test_odia}' -> tokens: {test_tokens[:5]}... -> '{test_decoded}'")
                 
                 # Check for unknown tokens
                 unk_count = sum(1 for token_id in test_tokens if token_id == self.tokenizer.unk_token_id)
                 if unk_count > 0:
-                    print(f"   WARNING: {unk_count} unknown tokens in Odia test")
+                    print(f" WARNING: {unk_count} unknown tokens in Odia test")
                 else:
-                    print(f"   SUCCESS: Odia text properly tokenized")
-                print(f"   Vocabulary size: {self.config.vocab_size}")
-                print(f"   PAD token ID: {self.config.pad_token_id}")
-                print(f"   UNK token ID: {self.config.unk_token_id}")
-                print(f"   BOS token ID: {self.config.bos_token_id}")
-                print(f"   EOS token ID: {self.config.eos_token_id}")
+                    print(f" SUCCESS: Odia text properly tokenized")
+                print(f" Vocabulary size: {self.config.vocab_size}")
+                print(f" PAD token ID: {self.config.pad_token_id}")
+                print(f" UNK token ID: {self.config.unk_token_id}")
+                print(f" BOS token ID: {self.config.bos_token_id}")
+                print(f" EOS token ID: {self.config.eos_token_id}")
                 
                 self.use_pretrained = True
                 
@@ -372,8 +372,8 @@ class RoPEPositionalEmbedding(nn.Module):
         self._update_cos_sin_cache(seq_len, q.device, q.dtype)
         
         # Get cos and sin values for the positions
-        cos = self._cos_cached[position_ids].unsqueeze(-2)  # [batch, seq_len, 1, dim]
-        sin = self._sin_cached[position_ids].unsqueeze(-2)  # [batch, seq_len, 1, dim]
+        cos = self._cos_cached[position_ids].unsqueeze(-2) # [batch, seq_len, 1, dim]
+        sin = self._sin_cached[position_ids].unsqueeze(-2) # [batch, seq_len, 1, dim]
         
         # Apply rotation
         q_embed = (q * cos) + (self.rotate_half(q) * sin)
@@ -473,32 +473,32 @@ class T5TranslationModel(nn.Module):
             # Load with proper initialization
             self.t5_model = MT5ForConditionalGeneration.from_pretrained(
                 config.pretrained_model_name,
-                torch_dtype=torch.float32,  # Ensure float32 for stability
-                low_cpu_mem_usage=True,     # Optimize memory usage
+                torch_dtype=torch.float32, # Ensure float32 for stability
+                low_cpu_mem_usage=True, # Optimize memory usage
             )
             self.t5_config = self.t5_model.config
-            print(f"   ✅ mT5 model loaded successfully")
+            print(f" mT5 model loaded successfully")
             
             # Validate model parameters
             param_count = sum(p.numel() for p in self.t5_model.parameters())
             trainable_params = sum(p.numel() for p in self.t5_model.parameters() if p.requires_grad)
             nan_params = sum(1 for p in self.t5_model.parameters() if torch.isnan(p).any())
             
-            print(f"   Model parameters: {param_count:,}")
-            print(f"   Trainable parameters: {trainable_params:,}")
-            print(f"   NaN parameters: {nan_params}")
+            print(f" Model parameters: {param_count:,}")
+            print(f" Trainable parameters: {trainable_params:,}")
+            print(f" NaN parameters: {nan_params}")
             
             if nan_params > 0:
-                print(f"   ⚠️ WARNING: Model has {nan_params} parameters with NaN values")
-                print(f"   Reinitializing problematic parameters...")
+                print(f" WARNING: Model has {nan_params} parameters with NaN values")
+                print(f" Reinitializing problematic parameters...")
                 # Reinitialize NaN parameters
                 for name, param in self.t5_model.named_parameters():
                     if torch.isnan(param).any():
-                        print(f"   Reinitializing {name}")
+                        print(f" Reinitializing {name}")
                         torch.nn.init.normal_(param, mean=0.0, std=0.02)
             
         except Exception as e:
-            print(f"   ❌ Failed to load mT5 model: {e}")
+            print(f" Failed to load mT5 model: {e}")
             raise e
         
         # Update config with T5 dimensions
@@ -509,20 +509,20 @@ class T5TranslationModel(nn.Module):
         if getattr(config, 'use_rope', True):
             print("Initializing RoPE (Rotary Position Embedding)")
             self.rope_embedding = RoPEPositionalEmbedding(
-                dim=self.hidden_size // self.t5_config.num_heads,  # Per-head dimension
+                dim=self.hidden_size // self.t5_config.num_heads, # Per-head dimension
                 max_position_embeddings=config.max_position_embeddings,
                 base=getattr(config, 'rope_theta', 10000.0)
             )
             
             # Replace T5's relative position bias with RoPE in attention layers
             self._replace_attention_with_rope()
-            print(f"   RoPE enabled with theta={config.rope_theta}")
+            print(f" RoPE enabled with theta={config.rope_theta}")
         else:
             self.rope_embedding = None
-            print("   Using standard T5 relative position bias")
+            print(" Using standard T5 relative position bias")
         
         # Freeze T5 layers if specified (reduce freezing for better learning)
-        freeze_layers = max(0, config.freeze_t5_layers - 1)  # Freeze one less layer
+        freeze_layers = max(0, config.freeze_t5_layers - 1) # Freeze one less layer
         if freeze_layers > 0:
             print(f"Freezing first {freeze_layers} T5 encoder layers (reduced from {config.freeze_t5_layers})")
             frozen_params = 0
@@ -532,12 +532,12 @@ class T5TranslationModel(nn.Module):
                     for param in layer.parameters():
                         param.requires_grad = False
                         frozen_params += param.numel()
-            print(f"   Frozen {frozen_params:,} parameters")
+            print(f" Frozen {frozen_params:,} parameters")
             
             # Validate parameter counts after freezing
             total_params = sum(p.numel() for p in self.t5_model.parameters())
             trainable_params = sum(p.numel() for p in self.t5_model.parameters() if p.requires_grad)
-            print(f"   Total params: {total_params:,}, Trainable: {trainable_params:,}")
+            print(f" Total params: {total_params:,}, Trainable: {trainable_params:,}")
         else:
             print("No layers frozen - full model training for better convergence")
         
@@ -552,20 +552,20 @@ class T5TranslationModel(nn.Module):
         trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         
         print(f"mT5-based model with RoPE created:")
-        print(f"   Model: {config.pretrained_model_name}")
-        print(f"   Hidden size: {self.hidden_size}")
-        print(f"   Vocab size: {config.vocab_size}")
-        print(f"   Total parameters: {total_params:,}")
-        print(f"   Trainable parameters: {trainable_params:,}")
-        print(f"   Max source length: {config.max_source_length}")
-        print(f"   Max target length: {config.max_target_length}")
-        print(f"   RoPE enabled: {getattr(config, 'use_rope', True)}")
+        print(f" Model: {config.pretrained_model_name}")
+        print(f" Hidden size: {self.hidden_size}")
+        print(f" Vocab size: {config.vocab_size}")
+        print(f" Total parameters: {total_params:,}")
+        print(f" Trainable parameters: {trainable_params:,}")
+        print(f" Max source length: {config.max_source_length}")
+        print(f" Max target length: {config.max_target_length}")
+        print(f" RoPE enabled: {getattr(config, 'use_rope', True)}")
         
         # Sanity check - mT5-small should have ~300M parameters
-        if total_params < 100_000_000:  # Less than 100M is suspicious
-            print(f"   ⚠️ WARNING: Parameter count seems too low for mT5-small")
-            print(f"   Expected ~300M parameters, got {total_params:,}")
-            print(f"   This might indicate a model loading issue")
+        if total_params < 100_000_000: # Less than 100M is suspicious
+            print(f" WARNING: Parameter count seems too low for mT5-small")
+            print(f" Expected ~300M parameters, got {total_params:,}")
+            print(f" This might indicate a model loading issue")
     
     def _replace_attention_with_rope(self):
         """Replace T5's attention mechanism with RoPE-enhanced attention."""
@@ -641,7 +641,7 @@ class T5TranslationModel(nn.Module):
         )
         return loss
     
-    def generate(self, input_ids: torch.Tensor, max_length: int = 50, temperature: float = 1.0, 
+    def generate(self, input_ids: torch.Tensor, max_length: int = 50, temperature: float = 1.0,
                  do_sample: bool = False, top_p: float = 0.9, num_beams: int = 1, **kwargs) -> torch.Tensor:
         """Generate translation using T5's built-in generation."""
         self.eval()
@@ -656,7 +656,7 @@ class T5TranslationModel(nn.Module):
                 'pad_token_id': self.config.pad_token_id,
                 'eos_token_id': self.config.eos_token_id,
                 'early_stopping': True,
-                'use_cache': True,  # Enable caching for efficiency
+                'use_cache': True, # Enable caching for efficiency
                 'do_sample': do_sample,
                 'temperature': temperature if do_sample else 1.0,
                 'top_p': top_p if do_sample else 1.0,
@@ -724,7 +724,7 @@ class ImprovedTransformerModel(nn.Module):
         self.apply(self._init_weights)
         
         print(f"Improved Transformer model created")
-        print(f"   Parameters: {sum(p.numel() for p in self.parameters()):,}")
+        print(f" Parameters: {sum(p.numel() for p in self.parameters()):,}")
     
     def _init_weights(self, module):
         """Initialize weights properly."""
@@ -776,7 +776,7 @@ class ImprovedTransformerModel(nn.Module):
             
             # Decode
             output = self.decoder(
-                tgt_emb, 
+                tgt_emb,
                 memory,
                 tgt_mask=tgt_causal_mask,
                 tgt_key_padding_mask=tgt_key_padding_mask,
@@ -849,7 +849,7 @@ class ImprovedTransformerModel(nn.Module):
 class ImprovedOdiaEnglishDataset(Dataset):
     """Improved dataset with better preprocessing."""
     
-    def __init__(self, data_path: str, tokenizer: ImprovedTokenizer, config: ImprovedConfig, 
+    def __init__(self, data_path: str, tokenizer: ImprovedTokenizer, config: ImprovedConfig,
                  data_config: DataConfig, is_training: bool = True):
         self.data_path = data_path
         self.tokenizer = tokenizer
@@ -876,7 +876,7 @@ class ImprovedOdiaEnglishDataset(Dataset):
                 split_idx_start = int(self.data_config.train_test_split * len(all_data))
                 split_idx_end = int((self.data_config.train_test_split + self.data_config.val_split) * len(all_data))
                 data_pairs = all_data[split_idx_start:split_idx_end]
-            else:  # test
+            else: # test
                 split_idx = int((self.data_config.train_test_split + self.data_config.val_split) * len(all_data))
                 data_pairs = all_data[split_idx:]
             
@@ -897,7 +897,7 @@ class ImprovedOdiaEnglishDataset(Dataset):
                 odia_text = str(example.get('output', '')).strip()
                 
                 # Better filtering
-                if (english_text and odia_text and 
+                if (english_text and odia_text and
                     self.data_config.min_sentence_length <= len(english_text.split()) <= self.data_config.max_sentence_length and
                     self.data_config.min_sentence_length <= len(odia_text.split()) <= self.data_config.max_sentence_length):
                     data_pairs.append((odia_text, english_text))
@@ -935,7 +935,7 @@ class ImprovedOdiaEnglishDataset(Dataset):
         
         # Duplicate data for training
         if self.is_training:
-            sample_data = sample_data * 10  # 200 training examples
+            sample_data = sample_data * 10 # 200 training examples
         
         return sample_data
     
@@ -976,8 +976,8 @@ class ImprovedOdiaEnglishDataset(Dataset):
             vocab_size = len(self.tokenizer.tokenizer)
             if src_ids.max().item() >= vocab_size or tgt_ids.max().item() >= vocab_size:
                 print(f"WARNING: Token IDs exceed vocab size {vocab_size} in sample {idx}")
-                print(f"  Source max: {src_ids.max().item()}, Target max: {tgt_ids.max().item()}")
-                print(f"  Input: '{input_text}' -> Target: '{target_text}'")
+                print(f" Source max: {src_ids.max().item()}, Target max: {tgt_ids.max().item()}")
+                print(f" Input: '{input_text}' -> Target: '{target_text}'")
                 # Clamp token IDs to valid range
                 src_ids = torch.clamp(src_ids, 0, vocab_size - 1)
                 tgt_ids = torch.clamp(tgt_ids, 0, vocab_size - 1)
@@ -1019,7 +1019,7 @@ class ImprovedOdiaEnglishDataset(Dataset):
 class ImprovedTrainer:
     """Improved trainer with better training strategies and inference monitoring."""
     
-    def __init__(self, model: ImprovedTransformerModel, tokenizer: ImprovedTokenizer, 
+    def __init__(self, model: ImprovedTransformerModel, tokenizer: ImprovedTokenizer,
                  config: ImprovedConfig, data_config: DataConfig):
         self.model = model
         self.tokenizer = tokenizer
@@ -1061,16 +1061,16 @@ class ImprovedTrainer:
             self.model.parameters(),
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
-            betas=(0.9, 0.999),  # Standard betas for T5
-            eps=1e-8,            # Standard epsilon
-            amsgrad=False        # Disable amsgrad for stability
+            betas=(0.9, 0.999), # Standard betas for T5
+            eps=1e-8, # Standard epsilon
+            amsgrad=False # Disable amsgrad for stability
         )
         
         # Validate optimizer parameters
         print(f"Optimizer configured:")
-        print(f"   Learning rate: {config.learning_rate}")
-        print(f"   Weight decay: {config.weight_decay}")
-        print(f"   Gradient clip norm: {config.gradient_clip_norm}")
+        print(f" Learning rate: {config.learning_rate}")
+        print(f" Weight decay: {config.weight_decay}")
+        print(f" Gradient clip norm: {config.gradient_clip_norm}")
         
         # Setup mixed precision training
         self.use_mixed_precision = getattr(config, 'use_mixed_precision', False) and torch.cuda.is_available()
@@ -1093,9 +1093,9 @@ class ImprovedTrainer:
         self.current_epoch = 0
         self.global_step = 0
         self.best_val_loss = float('inf')
-        self.nan_count = 0  # Track NaN occurrences
-        self.consecutive_nan_batches = 0  # Track consecutive NaN batches
-        self.max_consecutive_nan = 10  # Emergency stop threshold
+        self.nan_count = 0 # Track NaN occurrences
+        self.consecutive_nan_batches = 0 # Track consecutive NaN batches
+        self.max_consecutive_nan = 10 # Emergency stop threshold
         
         # Learning rate scheduler (will be initialized in train method)
         self.scheduler = None
@@ -1103,9 +1103,9 @@ class ImprovedTrainer:
         # Metrics tracking
         self.train_losses = []
         self.val_losses = []
-        self.test_losses = []  # Track test losses
-        self.translation_history = []  # Track translation quality over epochs
-        self.learning_rates = []  # Track learning rate changes
+        self.test_losses = [] # Track test losses
+        self.translation_history = [] # Track translation quality over epochs
+        self.learning_rates = [] # Track learning rate changes
         
         # Detailed history tracking for every 100 iterations
         self.detailed_history = {
@@ -1138,13 +1138,13 @@ class ImprovedTrainer:
         os.makedirs(config.model_save_path, exist_ok=True)
         
         print(f"Improved trainer initialized")
-        print(f"   Model parameters: {sum(p.numel() for p in model.parameters()):,}")
-        print(f"   Monitoring {len(self.test_sentences)} test sentences per epoch")
-        print(f"   Mixed precision: {self.use_mixed_precision}")
-        print(f"   Gradient accumulation: {self.accumulate_grad_batches}")
-        print(f"   Effective batch size: {config.batch_size * self.accumulate_grad_batches}")
-        print(f"   Multi-GPU: {self.is_parallel}")
-        print(f"   Max sequence lengths: {config.max_source_length}/{config.max_target_length}")
+        print(f" Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+        print(f" Monitoring {len(self.test_sentences)} test sentences per epoch")
+        print(f" Mixed precision: {self.use_mixed_precision}")
+        print(f" Gradient accumulation: {self.accumulate_grad_batches}")
+        print(f" Effective batch size: {config.batch_size * self.accumulate_grad_batches}")
+        print(f" Multi-GPU: {self.is_parallel}")
+        print(f" Max sequence lengths: {config.max_source_length}/{config.max_target_length}")
         
         # Clear GPU cache and warn about memory usage
         if torch.cuda.is_available():
@@ -1152,20 +1152,20 @@ class ImprovedTrainer:
             print("GPU cache cleared")
             print("\nWARNING: Using T5-base with RoPE and increased dimensions requires significant GPU memory.")
             print("If you encounter OOM errors, consider:")
-            print("  - Reducing batch_size further (currently {})" .format(config.batch_size))
-            print("  - Increasing accumulate_grad_batches (currently {})" .format(self.accumulate_grad_batches))
-            print("  - Using gradient checkpointing")
-            print("  - Switching to t5-small if memory is limited")
-            print("  - Disabling RoPE by setting use_rope=False")
+            print(" - Reducing batch_size further (currently {})" .format(config.batch_size))
+            print(" - Increasing accumulate_grad_batches (currently {})" .format(self.accumulate_grad_batches))
+            print(" - Using gradient checkpointing")
+            print(" - Switching to t5-small if memory is limited")
+            print(" - Disabling RoPE by setting use_rope=False")
             print(f"\nBatch Configuration:")
-            print(f"  - Batch size: {config.batch_size}")
-            print(f"  - Gradient accumulation: {self.accumulate_grad_batches}")
-            print(f"  - Effective batch size: {config.batch_size * self.accumulate_grad_batches}")
-            print(f"  - Updates per {self.accumulate_grad_batches} batches")
+            print(f" - Batch size: {config.batch_size}")
+            print(f" - Gradient accumulation: {self.accumulate_grad_batches}")
+            print(f" - Effective batch size: {config.batch_size * self.accumulate_grad_batches}")
+            print(f" - Updates per {self.accumulate_grad_batches} batches")
             print(f"\nT5 Training Notes:")
-            print(f"  - Using task prefix: 'translate Odia to English: '")
-            print(f"  - Model should learn to map prefixed inputs to target outputs")
-            print(f"  - Generation uses same task prefix for consistency")
+            print(f" - Using task prefix: 'translate Odia to English: '")
+            print(f" - Model should learn to map prefixed inputs to target outputs")
+            print(f" - Generation uses same task prefix for consistency")
     
     def get_model(self):
         """Get the actual model, handling DataParallel wrapper."""
@@ -1275,7 +1275,7 @@ class ImprovedTrainer:
     def _diagnose_model_state(self):
         """Comprehensive model state diagnosis."""
         print("\n" + "="*50)
-        print("🔍 MODEL DIAGNOSTIC REPORT")
+        print(" MODEL DIAGNOSTIC REPORT")
         print("="*50)
         
         # Check model parameters
@@ -1317,18 +1317,18 @@ class ImprovedTrainer:
         print(f"Total NaN count: {self.nan_count}")
         
         # Recommendations
-        print("\n💡 RECOMMENDATIONS:")
+        print("\n RECOMMENDATIONS:")
         if len(nan_params) > 0:
-            print("   ❌ Model parameters contain NaN - model is corrupted")
-            print("   🔄 Restart training with fresh model initialization")
+            print(" Model parameters contain NaN - model is corrupted")
+            print(" Restart training with fresh model initialization")
         elif len(inf_params) > 0:
-            print("   ⚠️  Model parameters contain Inf values")
-            print("   🔧 Reduce learning rate significantly")
+            print(" Model parameters contain Inf values")
+            print(" Reduce learning rate significantly")
         else:
-            print("   🔍 Model parameters look OK - issue might be in data or loss computation")
-            print("   🔧 Check tokenization and data preprocessing")
-            print("   🔧 Try even lower learning rate (1e-5 or 1e-6)")
-            print("   🔧 Switch to CPU training to isolate GPU issues")
+            print(" Model parameters look OK - issue might be in data or loss computation")
+            print(" Check tokenization and data preprocessing")
+            print(" Try even lower learning rate (1e-5 or 1e-6)")
+            print(" Switch to CPU training to isolate GPU issues")
         
         print("="*50)
     
@@ -1339,7 +1339,7 @@ class ImprovedTrainer:
                 memory_allocated = torch.cuda.memory_allocated(i) / 1024**3
                 memory_reserved = torch.cuda.memory_reserved(i) / 1024**3
                 memory_total = torch.cuda.get_device_properties(i).total_memory / 1024**3
-                print(f"   GPU {i}: {memory_allocated:.1f}GB/{memory_total:.1f}GB ({memory_allocated/memory_total*100:.1f}%)")
+                print(f" GPU {i}: {memory_allocated:.1f}GB/{memory_total:.1f}GB ({memory_allocated/memory_total*100:.1f}%)")
     
     def train_epoch(self, train_loader: DataLoader) -> Dict[str, float]:
         """Train for one epoch with mixed precision and gradient accumulation."""
@@ -1386,7 +1386,7 @@ class ImprovedTrainer:
                     
                     # Extract loss from model output
                     if isinstance(model_output, tuple):
-                        loss = model_output[0]  # First element is loss
+                        loss = model_output[0] # First element is loss
                     else:
                         loss = model_output.loss if hasattr(model_output, 'loss') else model_output
                     
@@ -1399,7 +1399,7 @@ class ImprovedTrainer:
                     
                     # Ensure loss is scalar - handle DataParallel case
                     if hasattr(loss, 'dim') and loss.dim() > 0:
-                        loss = loss.mean()  # Reduce to scalar
+                        loss = loss.mean() # Reduce to scalar
                     
                     # Check for NaN or infinite loss BEFORE scaling
                     if torch.isnan(loss) or torch.isinf(loss):
@@ -1410,18 +1410,18 @@ class ImprovedTrainer:
                         print(f"Consecutive NaN batches: {self.consecutive_nan_batches}/{self.max_consecutive_nan}")
                         
                         # Skip this batch completely - don't call scaler at all
-                        self.optimizer.zero_grad()  # Clear gradients
+                        self.optimizer.zero_grad() # Clear gradients
                         
                         # Emergency stop if too many consecutive NaN batches
                         if self.consecutive_nan_batches >= self.max_consecutive_nan:
-                            print(f"\n🚨 EMERGENCY STOP: {self.max_consecutive_nan} consecutive NaN batches detected!")
+                            print(f"\n EMERGENCY STOP: {self.max_consecutive_nan} consecutive NaN batches detected!")
                             print("This indicates a fundamental model initialization problem.")
-                            print("\n🔍 Diagnostic Information:")
+                            print("\n Diagnostic Information:")
                             self._diagnose_model_state()
                             raise RuntimeError(f"Training failed: {self.max_consecutive_nan} consecutive NaN losses")
                         
                         print(f"Skipping this batch and continuing...")
-                        continue  # Skip this batch completely
+                        continue # Skip this batch completely
                     else:
                         # Reset consecutive NaN counter on successful batch
                         self.consecutive_nan_batches = 0
@@ -1440,7 +1440,7 @@ class ImprovedTrainer:
                     model_output = self.model(input_ids, labels)
                     # Extract loss from model output
                     if isinstance(model_output, tuple):
-                        loss = model_output[0]  # First element is loss
+                        loss = model_output[0] # First element is loss
                     else:
                         loss = model_output.loss if hasattr(model_output, 'loss') else model_output
                     
@@ -1453,7 +1453,7 @@ class ImprovedTrainer:
                     
                     # Ensure loss is scalar - handle DataParallel case
                     if hasattr(loss, 'dim') and loss.dim() > 0:
-                        loss = loss.mean()  # Reduce to scalar
+                        loss = loss.mean() # Reduce to scalar
                     
                     # Check for NaN or infinite loss
                     if torch.isnan(loss) or torch.isinf(loss):
@@ -1464,18 +1464,18 @@ class ImprovedTrainer:
                         print(f"Consecutive NaN batches: {self.consecutive_nan_batches}/{self.max_consecutive_nan}")
                         
                         # Try to recover by skipping this batch
-                        self.optimizer.zero_grad()  # Clear gradients
+                        self.optimizer.zero_grad() # Clear gradients
                         
                         # Emergency stop if too many consecutive NaN batches
                         if self.consecutive_nan_batches >= self.max_consecutive_nan:
-                            print(f"\n🚨 EMERGENCY STOP: {self.max_consecutive_nan} consecutive NaN batches detected!")
+                            print(f"\n EMERGENCY STOP: {self.max_consecutive_nan} consecutive NaN batches detected!")
                             print("This indicates a fundamental model initialization problem.")
-                            print("\n🔍 Diagnostic Information:")
+                            print("\n Diagnostic Information:")
                             self._diagnose_model_state()
                             raise RuntimeError(f"Training failed: {self.max_consecutive_nan} consecutive NaN losses")
                         
                         print(f"Skipping this batch and continuing...")
-                        continue  # Skip this batch
+                        continue # Skip this batch
                     else:
                         # Reset consecutive NaN counter on successful batch
                         self.consecutive_nan_batches = 0
@@ -1575,15 +1575,15 @@ class ImprovedTrainer:
                 if TQDM_AVAILABLE:
                     current_lr = self.optimizer.param_groups[0]['lr']
                     pbar.set_postfix({
-                        'loss': loss.item() * self.accumulate_grad_batches, 
+                        'loss': loss.item() * self.accumulate_grad_batches,
                         'lr': f'{current_lr:.2e}'
                     })
                 elif batch_idx % 50 == 0:
                     current_lr = self.optimizer.param_groups[0]['lr']
-                    print(f"  Batch {batch_idx}/{num_batches}, Loss: {loss.item() * self.accumulate_grad_batches:.4f}, LR: {current_lr:.2e}")
+                    print(f" Batch {batch_idx}/{num_batches}, Loss: {loss.item() * self.accumulate_grad_batches:.4f}, LR: {current_lr:.2e}")
                     
                     # Clear GPU cache more frequently for larger model
-                    if batch_idx % 50 == 0:  # More frequent clearing for larger model
+                    if batch_idx % 50 == 0: # More frequent clearing for larger model
                         self._clear_gpu_cache()
                 
             except Exception as e:
@@ -1617,18 +1617,18 @@ class ImprovedTrainer:
                 model_output = self.model(input_ids, labels)
                 # Extract loss from model output
                 if isinstance(model_output, tuple):
-                    loss = model_output[0]  # First element is loss
+                    loss = model_output[0] # First element is loss
                 else:
                     loss = model_output.loss if hasattr(model_output, 'loss') else model_output
                 
                 # Ensure loss is scalar - handle DataParallel case
                 if loss.dim() > 0:
-                    loss = loss.mean()  # Reduce to scalar
+                    loss = loss.mean() # Reduce to scalar
                 
                 total_loss += loss.item()
         
         avg_loss = total_loss / num_batches
-        perplexity = math.exp(min(avg_loss, 10))  # Cap for numerical stability
+        perplexity = math.exp(min(avg_loss, 10)) # Cap for numerical stability
         
         self.val_losses.append(avg_loss)
         
@@ -1652,18 +1652,18 @@ class ImprovedTrainer:
                 model_output = self.model(input_ids, labels)
                 # Extract loss from model output
                 if isinstance(model_output, tuple):
-                    loss = model_output[0]  # First element is loss
+                    loss = model_output[0] # First element is loss
                 else:
                     loss = model_output.loss if hasattr(model_output, 'loss') else model_output
                 
                 # Ensure loss is scalar - handle DataParallel case
                 if loss.dim() > 0:
-                    loss = loss.mean()  # Reduce to scalar
+                    loss = loss.mean() # Reduce to scalar
                 
                 total_loss += loss.item()
         
         avg_loss = total_loss / num_batches
-        perplexity = math.exp(min(avg_loss, 10))  # Cap for numerical stability
+        perplexity = math.exp(min(avg_loss, 10)) # Cap for numerical stability
         
         self.test_losses.append(avg_loss)
         
@@ -1677,7 +1677,7 @@ class ImprovedTrainer:
         # Format for compatibility with existing code
         epoch_results = {
             'epoch': self.current_epoch + 1,
-            'avg_similarity': evaluation_result['bleu_score'],  # Use BLEU as similarity
+            'avg_similarity': evaluation_result['bleu_score'], # Use BLEU as similarity
             'bleu_score': evaluation_result['bleu_score'],
             'successful_translations': evaluation_result['num_samples'],
             'success_rate': 1.0 if evaluation_result['bleu_score'] > 0.1 else 0.0,
@@ -1695,13 +1695,13 @@ class ImprovedTrainer:
             try:
                 # Tokenize sentences
                 generated_tokens = generated.lower().split()
-                reference_tokens = [reference.lower().split()]  # BLEU expects list of reference lists
+                reference_tokens = [reference.lower().split()] # BLEU expects list of reference lists
                 
                 # Use smoothing function to handle edge cases
                 smoothing = SmoothingFunction().method1
                 
                 # Calculate BLEU score (using BLEU-4 with smoothing)
-                bleu_score = sentence_bleu(reference_tokens, generated_tokens, 
+                bleu_score = sentence_bleu(reference_tokens, generated_tokens,
                                          smoothing_function=smoothing)
                 return bleu_score
                 
@@ -1743,7 +1743,7 @@ class ImprovedTrainer:
         # Quick validation loss calculation on a subset
         val_loss = self._calculate_quick_val_loss()
         
-        # Quick test loss calculation on a subset  
+        # Quick test loss calculation on a subset
         test_loss = self._calculate_quick_test_loss()
         
         # Quick BLEU evaluation on a subset of test data
@@ -1758,7 +1758,7 @@ class ImprovedTrainer:
         self.detailed_history['bleu_scores'].append(bleu_score)
         self.detailed_history['timestamps'].append(timestamp)
         
-        print(f"\n📊 Iteration {self.global_step}: Train={current_train_loss:.4f}, Val={val_loss:.4f}, Test={test_loss:.4f}, LR={current_lr:.2e}, BLEU={bleu_score:.4f}")
+        print(f"\n Iteration {self.global_step}: Train={current_train_loss:.4f}, Val={val_loss:.4f}, Test={test_loss:.4f}, LR={current_lr:.2e}, BLEU={bleu_score:.4f}")
     
     def _calculate_quick_val_loss(self, num_samples=20):
         """Calculate validation loss on a small subset for quick evaluation."""
@@ -1771,7 +1771,7 @@ class ImprovedTrainer:
         
         # Get random validation samples
         import random
-        val_indices = random.sample(range(len(self.val_dataset_cache)), 
+        val_indices = random.sample(range(len(self.val_dataset_cache)),
                                    min(num_samples, len(self.val_dataset_cache)))
         
         with torch.no_grad():
@@ -1796,7 +1796,7 @@ class ImprovedTrainer:
                 except Exception as e:
                     continue
         
-        self.model.train()  # Return to training mode
+        self.model.train() # Return to training mode
         
         return total_loss / evaluated_samples if evaluated_samples > 0 else 0.0
     
@@ -1811,7 +1811,7 @@ class ImprovedTrainer:
         
         # Get random test samples
         import random
-        test_indices = random.sample(range(len(self.test_dataset)), 
+        test_indices = random.sample(range(len(self.test_dataset)),
                                    min(num_samples, len(self.test_dataset)))
         
         with torch.no_grad():
@@ -1836,7 +1836,7 @@ class ImprovedTrainer:
                 except Exception as e:
                     continue
         
-        self.model.train()  # Return to training mode
+        self.model.train() # Return to training mode
         
         return total_loss / evaluated_samples if evaluated_samples > 0 else 0.0
     
@@ -1851,7 +1851,7 @@ class ImprovedTrainer:
         
         # Get a random subset of test samples
         import random
-        test_indices = random.sample(range(len(self.test_dataset)), 
+        test_indices = random.sample(range(len(self.test_dataset)),
                                    min(num_samples, len(self.test_dataset)))
         
         with torch.no_grad():
@@ -1870,9 +1870,9 @@ class ImprovedTrainer:
                     evaluated_samples += 1
                     
                 except Exception as e:
-                    continue  # Skip problematic samples
+                    continue # Skip problematic samples
         
-        self.model.train()  # Return to training mode
+        self.model.train() # Return to training mode
         
         if evaluated_samples > 0:
             return total_bleu / evaluated_samples
@@ -1896,8 +1896,8 @@ class ImprovedTrainer:
             
             # Generate translation
             generated_ids = self.get_model().generate(
-                input_ids, 
-                max_length=50, 
+                input_ids,
+                max_length=50,
                 temperature=0.8,
                 do_sample=True,
                 top_p=0.9,
@@ -1911,8 +1911,8 @@ class ImprovedTrainer:
             # Fallback for simple tokenizer
             odia_tokens = self.tokenizer.tokenize(odia_text, max_length=self.config.max_source_length - 2)
             input_ids = torch.tensor(
-                [[self.config.bos_token_id] + odia_tokens + [self.config.eos_token_id]], 
-                dtype=torch.long, 
+                [[self.config.bos_token_id] + odia_tokens + [self.config.eos_token_id]],
+                dtype=torch.long,
                 device=self.device
             )
             
@@ -1927,7 +1927,7 @@ class ImprovedTrainer:
             print("Warning: No test dataset available for evaluation")
             return {'bleu_score': 0.0, 'num_samples': 0}
         
-        print(f"\n🧪 Evaluating on full test dataset ({len(self.test_dataset)} samples)...")
+        print(f"\n Evaluating on full test dataset ({len(self.test_dataset)} samples)...")
         
         self.model.eval()
         total_bleu = 0.0
@@ -1955,9 +1955,9 @@ class ImprovedTrainer:
                     evaluated_samples += 1
                     
                 except Exception as e:
-                    continue  # Skip problematic samples
+                    continue # Skip problematic samples
         
-        self.model.train()  # Return to training mode
+        self.model.train() # Return to training mode
         
         avg_bleu = total_bleu / evaluated_samples if evaluated_samples > 0 else 0.0
         
@@ -1971,7 +1971,7 @@ class ImprovedTrainer:
         }
         self.test_evaluation_history.append(evaluation_result)
         
-        print(f"📊 Test Dataset Evaluation: BLEU={avg_bleu:.4f} on {evaluated_samples} samples")
+        print(f" Test Dataset Evaluation: BLEU={avg_bleu:.4f} on {evaluated_samples} samples")
         
         return evaluation_result
     
@@ -1986,7 +1986,7 @@ class ImprovedTrainer:
         print("-" * 95)
         
         for i, (train_loss, val_loss, test_loss, trans_result) in enumerate(zip(
-            self.train_losses[-5:],  # Last 5 epochs
+            self.train_losses[-5:], # Last 5 epochs
             self.val_losses[-5:],
             self.test_losses[-5:] if len(self.test_losses) >= 5 else [0.0] * 5,
             self.translation_history[-5:]
@@ -2007,11 +2007,11 @@ class ImprovedTrainer:
             improvement = recent_bleu - prev_bleu
             
             if improvement > 0.05:
-                print(f"🎉 BLEU score improving! (+{improvement:.4f})")
+                print(f" BLEU score improving! (+{improvement:.4f})")
             elif improvement < -0.05:
-                print(f"⚠️ WARNING: BLEU score declining (-{abs(improvement):.4f})")
+                print(f" WARNING: BLEU score declining (-{abs(improvement):.4f})")
             else:
-                print(f"📊 BLEU score stable (~{improvement:+.4f})")
+                print(f" BLEU score stable (~{improvement:+.4f})")
         
         # Show recent detailed history if available
         if self.detailed_history['iterations'] and len(self.detailed_history['iterations']) >= 3:
@@ -2065,23 +2065,23 @@ class ImprovedTrainer:
             
             # Print basic metrics
             print(f"\nEpoch {epoch + 1} Metrics:")
-            print(f"   Train Loss: {train_metrics['train_loss']:.4f}")
-            print(f"   Val Loss: {val_metrics['val_loss']:.4f}")
-            print(f"   Test Loss: {test_metrics['test_loss']:.4f}")
-            print(f"   Val Perplexity: {val_metrics['perplexity']:.2f}")
-            print(f"   Test Perplexity: {test_metrics['test_perplexity']:.2f}")
+            print(f" Train Loss: {train_metrics['train_loss']:.4f}")
+            print(f" Val Loss: {val_metrics['val_loss']:.4f}")
+            print(f" Test Loss: {test_metrics['test_loss']:.4f}")
+            print(f" Val Perplexity: {val_metrics['perplexity']:.2f}")
+            print(f" Test Perplexity: {test_metrics['test_perplexity']:.2f}")
             if 'learning_rate' in train_metrics:
-                print(f"   Learning Rate: {train_metrics['learning_rate']:.2e}")
+                print(f" Learning Rate: {train_metrics['learning_rate']:.2e}")
             
             # Print memory usage
-            print(f"   Memory Usage:")
+            print(f" Memory Usage:")
             self._print_memory_usage()
             
             # Test translations (inference monitoring)
             try:
                 translation_results = self.test_translations()
             except Exception as e:
-                print(f"  Error during translation testing: {e}")
+                print(f" Error during translation testing: {e}")
                 translation_results = {
                     'epoch': self.current_epoch + 1,
                     'avg_similarity': 0.0,
@@ -2091,7 +2091,7 @@ class ImprovedTrainer:
             
             # Check for improvements
             is_best_loss = val_metrics['val_loss'] < self.best_val_loss
-            is_best_translation = (len(self.translation_history) == 1 or 
+            is_best_translation = (len(self.translation_history) == 1 or
                                  translation_results['avg_similarity'] > max(h['avg_similarity'] for h in self.translation_history[:-1]))
             
             # Save best model
@@ -2145,10 +2145,10 @@ class ImprovedTrainer:
         if self.translation_history:
             print(f"\nFINAL TRANSLATION EXAMPLES:")
             print("-" * 60)
-            for trans in self.translation_history[-1]['translations'][:3]:  # Show first 3
+            for trans in self.translation_history[-1]['translations'][:3]: # Show first 3
                 status = "GOOD" if trans['similarity'] > 0.3 else "FAIR" if trans['similarity'] > 0.1 else "POOR"
                 print(f"[{status}] {trans['odia']} → {trans['generated']}")
-                print(f"   Expected: {trans['expected']} (Similarity: {trans['similarity']:.3f})")
+                print(f" Expected: {trans['expected']} (Similarity: {trans['similarity']:.3f})")
             print("-" * 60)
     
     def save_checkpoint(self, checkpoint_name: str):
@@ -2167,11 +2167,11 @@ class ImprovedTrainer:
             'best_val_loss': self.best_val_loss,
             'train_losses': self.train_losses,
             'val_losses': self.val_losses,
-            'test_losses': self.test_losses,  # Include test losses
-            'translation_history': self.translation_history,  # Include translation monitoring
-            'learning_rates': self.learning_rates,  # Track learning rate changes
-            'detailed_history': self.detailed_history,  # Include detailed iteration history
-            'test_evaluation_history': self.test_evaluation_history,  # Include test evaluations
+            'test_losses': self.test_losses, # Include test losses
+            'translation_history': self.translation_history, # Include translation monitoring
+            'learning_rates': self.learning_rates, # Track learning rate changes
+            'detailed_history': self.detailed_history, # Include detailed iteration history
+            'test_evaluation_history': self.test_evaluation_history, # Include test evaluations
             'scheduler_state': self.scheduler.state_dict() if self.scheduler else None
         }
         
@@ -2197,7 +2197,7 @@ class ImprovedTrainer:
                     test_loss = self.detailed_history['test_losses'][i] if i < len(self.detailed_history['test_losses']) else 0.0
                     lr = self.detailed_history['learning_rates'][i]
                     bleu = self.detailed_history['bleu_scores'][i]
-                    timestamp = self.detailed_history['timestamps'][i][:19]  # Remove microseconds
+                    timestamp = self.detailed_history['timestamps'][i][:19] # Remove microseconds
                     
                     f.write(f"{iteration:<10} {train_loss:<12.4f} {val_loss:<10.4f} {test_loss:<11.4f} {lr:<12.2e} {bleu:<10.4f} {timestamp:<20}\n")
                 
@@ -2249,7 +2249,7 @@ class ImprovedTrainer:
 # DATA LOADING
 # ================================
 
-def create_improved_data_loaders(tokenizer: ImprovedTokenizer, config: ImprovedConfig, 
+def create_improved_data_loaders(tokenizer: ImprovedTokenizer, config: ImprovedConfig,
                                 data_config: DataConfig) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Create improved data loaders."""
     
@@ -2268,7 +2268,7 @@ def create_improved_data_loaders(tokenizer: ImprovedTokenizer, config: ImprovedC
     
     # Optimized data loaders for Kaggle
     # Use more workers and prefetch for better performance
-    num_workers = min(4, os.cpu_count() or 1)  # Limit workers for Kaggle
+    num_workers = min(4, os.cpu_count() or 1) # Limit workers for Kaggle
     
     train_loader = DataLoader(
         train_dataset,
@@ -2276,9 +2276,9 @@ def create_improved_data_loaders(tokenizer: ImprovedTokenizer, config: ImprovedC
         shuffle=True,
         num_workers=num_workers,
         pin_memory=torch.cuda.is_available(),
-        prefetch_factor=2,  # Prefetch batches for speed
-        persistent_workers=True if num_workers > 0 else False,  # Keep workers alive
-        drop_last=True  # Drop incomplete batches for consistent timing
+        prefetch_factor=2, # Prefetch batches for speed
+        persistent_workers=True if num_workers > 0 else False, # Keep workers alive
+        drop_last=True # Drop incomplete batches for consistent timing
     )
     
     val_loader = DataLoader(
@@ -2318,35 +2318,35 @@ def detect_environment():
     elif os.path.exists('/content'):
         environment = "colab"
     
-    print(f"🔍 Detected environment: {environment.upper()}")
+    print(f" Detected environment: {environment.upper()}")
     
     # Environment-specific optimizations
     if environment == "kaggle":
-        print("📊 Applying Kaggle optimizations:")
-        print("   - Increased batch size for 16GB GPU memory")
-        print("   - Optimized data loading with multiple workers")
-        print("   - Reduced epochs for time limits")
-        print("   - Enabled cuDNN benchmarking")
+        print(" Applying Kaggle optimizations:")
+        print(" - Increased batch size for 16GB GPU memory")
+        print(" - Optimized data loading with multiple workers")
+        print(" - Reduced epochs for time limits")
+        print(" - Enabled cuDNN benchmarking")
         return {
             "batch_size": 6,
             "num_workers": 4,
             "num_epochs": 20,
-            "use_mixed_precision": False,  # More stable on Kaggle
-            "accumulate_grad_batches": 3,  # 6*3=18 effective batch size
+            "use_mixed_precision": False, # More stable on Kaggle
+            "accumulate_grad_batches": 3, # 6*3=18 effective batch size
         }
     elif environment == "colab":
-        print("🔬 Applying Colab optimizations:")
-        print("   - Balanced settings for variable GPU types")
-        print("   - Mixed precision for speed")
+        print(" Applying Colab optimizations:")
+        print(" - Balanced settings for variable GPU types")
+        print(" - Mixed precision for speed")
         return {
             "batch_size": 4,
             "num_workers": 2,
             "num_epochs": 25,
             "use_mixed_precision": True,
-            "accumulate_grad_batches": 4,  # 4*4=16 effective batch size
+            "accumulate_grad_batches": 4, # 4*4=16 effective batch size
         }
     else:
-        print("💻 Using local/default settings")
+        print(" Using local/default settings")
         return {
             "batch_size": 4,
             "num_workers": 2,
@@ -2357,39 +2357,39 @@ def detect_environment():
 
 def reset_cuda_state():
     """Reset CUDA state to recover from device assert errors."""
-    print("\n🔄 Resetting CUDA state...")
+    print("\n Resetting CUDA state...")
     
     if torch.cuda.is_available():
         try:
             # Clear all cached memory
             torch.cuda.empty_cache()
-            print("   ✓ Cleared CUDA cache")
+            print(" Cleared CUDA cache")
             
             # Reset all CUDA devices
             for i in range(torch.cuda.device_count()):
                 with torch.cuda.device(i):
                     torch.cuda.empty_cache()
                     torch.cuda.ipc_collect()
-            print(f"   ✓ Reset {torch.cuda.device_count()} CUDA device(s)")
+            print(f" Reset {torch.cuda.device_count()} CUDA device(s)")
             
             # Force garbage collection
             import gc
             gc.collect()
-            print("   ✓ Forced garbage collection")
+            print(" Forced garbage collection")
             
             # Set CUDA debugging environment variables
             import os
             os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
             os.environ['TORCH_USE_CUDA_DSA'] = '1'
-            print("   ✓ Enabled CUDA debugging")
+            print(" Enabled CUDA debugging")
             
             return True
             
         except Exception as e:
-            print(f"   ❌ CUDA reset failed: {e}")
+            print(f" CUDA reset failed: {e}")
             return False
     else:
-        print("   ⚠️  CUDA not available")
+        print(" CUDA not available")
         return False
 
 def safe_model_creation(config):
@@ -2398,35 +2398,35 @@ def safe_model_creation(config):
     
     for attempt in range(max_attempts):
         try:
-            print(f"\n🔧 Creating mT5 model (attempt {attempt + 1}/{max_attempts})...")
+            print(f"\n Creating mT5 model (attempt {attempt + 1}/{max_attempts})...")
             
             # Reset CUDA state before each attempt
             if attempt > 0:
                 reset_cuda_state()
-                time.sleep(2)  # Give GPU time to reset
+                time.sleep(2) # Give GPU time to reset
             
             # Create model
             if config.use_pretrained_t5 and TRANSFORMERS_AVAILABLE:
                 model = T5TranslationModel(config)
-                print("   ✓ mT5 model created successfully")
+                print(" mT5 model created successfully")
                 return model
             else:
                 model = ImprovedTransformerModel(config)
-                print("   ✓ Custom transformer model created")
+                print(" Custom transformer model created")
                 return model
                 
         except Exception as e:
-            print(f"   ❌ Model creation failed (attempt {attempt + 1}): {e}")
+            print(f" Model creation failed (attempt {attempt + 1}): {e}")
             if attempt == max_attempts - 1:
-                print("\n💥 All model creation attempts failed!")
-                print("\n🔧 Troubleshooting suggestions:")
-                print("   1. Restart the Python kernel/runtime")
-                print("   2. Clear all GPU processes: nvidia-smi --gpu-reset")
-                print("   3. Reduce model size: use 't5-small' instead of 'mt5-small'")
-                print("   4. Try CPU-only training: set device to 'cpu'")
+                print("\n All model creation attempts failed!")
+                print("\n Troubleshooting suggestions:")
+                print(" 1. Restart the Python kernel/runtime")
+                print(" 2. Clear all GPU processes: nvidia-smi --gpu-reset")
+                print(" 3. Reduce model size: use 't5-small' instead of 'mt5-small'")
+                print(" 4. Try CPU-only training: set device to 'cpu'")
                 raise e
             else:
-                print(f"   🔄 Retrying in 3 seconds...")
+                print(f" Retrying in 3 seconds...")
                 time.sleep(3)
     
     return None
@@ -2446,7 +2446,7 @@ def main():
     print(f"Model: mT5-small with RoPE, multilingual support including Odia")
     
     # Kaggle-specific optimizations
-    print(f"\n🔧 KAGGLE PERFORMANCE OPTIMIZATIONS:")
+    print(f"\n KAGGLE PERFORMANCE OPTIMIZATIONS:")
     print(f"CPU cores available: {os.cpu_count()}")
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
@@ -2454,20 +2454,20 @@ def main():
         print(f"GPU: {gpu_name} ({gpu_memory:.1f}GB)")
         
         # Set optimal GPU settings for Kaggle
-        torch.backends.cudnn.benchmark = True  # Optimize for consistent input sizes
-        torch.backends.cudnn.deterministic = False  # Allow non-deterministic for speed
-        print("✓ Enabled cuDNN optimizations")
+        torch.backends.cudnn.benchmark = True # Optimize for consistent input sizes
+        torch.backends.cudnn.deterministic = False # Allow non-deterministic for speed
+        print(" Enabled cuDNN optimizations")
     
     # Set optimal CPU settings
-    torch.set_num_threads(min(8, os.cpu_count() or 1))  # Limit threads for Kaggle
-    print(f"✓ Set PyTorch threads to {torch.get_num_threads()}")
+    torch.set_num_threads(min(8, os.cpu_count() or 1)) # Limit threads for Kaggle
+    print(f" Set PyTorch threads to {torch.get_num_threads()}")
     
     print("=" * 60)
     
     # Reset CUDA state at startup
     reset_success = reset_cuda_state()
     if not reset_success and torch.cuda.is_available():
-        print("\n⚠️  CUDA reset failed, but continuing...")
+        print("\n CUDA reset failed, but continuing...")
     
     try:
         # Load configurations and apply environment-specific optimizations
@@ -2483,12 +2483,12 @@ def main():
         config.use_mixed_precision = env_settings["use_mixed_precision"]
         config.accumulate_grad_batches = env_settings["accumulate_grad_batches"]
         
-        print(f"\n⚙️  Applied settings:")
-        print(f"   Batch size: {config.batch_size}")
-        print(f"   Epochs: {config.num_epochs}")
-        print(f"   Mixed precision: {config.use_mixed_precision}")
-        print(f"   Gradient accumulation: {config.accumulate_grad_batches}")
-        print(f"   Effective batch size: {config.batch_size * config.accumulate_grad_batches}")
+        print(f"\n Applied settings:")
+        print(f" Batch size: {config.batch_size}")
+        print(f" Epochs: {config.num_epochs}")
+        print(f" Mixed precision: {config.use_mixed_precision}")
+        print(f" Gradient accumulation: {config.accumulate_grad_batches}")
+        print(f" Effective batch size: {config.batch_size * config.accumulate_grad_batches}")
         
         # Create improved tokenizer
         print("\nCreating improved tokenizer...")
@@ -2498,21 +2498,21 @@ def main():
         model = safe_model_creation(config)
         
         # Create improved trainer with error recovery
-        print("\n🏋️  Creating improved trainer...")
+        print("\n Creating improved trainer...")
         try:
             trainer = ImprovedTrainer(model, tokenizer, config, data_config)
-            print("   ✓ Trainer created successfully")
+            print(" Trainer created successfully")
         except Exception as e:
-            print(f"   ❌ Trainer creation failed: {e}")
-            print("\n🔧 Attempting recovery...")
+            print(f" Trainer creation failed: {e}")
+            print("\n Attempting recovery...")
             reset_cuda_state()
             time.sleep(3)
             try:
                 trainer = ImprovedTrainer(model, tokenizer, config, data_config)
-                print("   ✓ Trainer created successfully after recovery")
+                print(" Trainer created successfully after recovery")
             except Exception as e2:
-                print(f"   ❌ Recovery failed: {e2}")
-                print("\n💡 Try restarting the runtime and running again")
+                print(f" Recovery failed: {e2}")
+                print("\n Try restarting the runtime and running again")
                 raise e2
         
         # Create data loaders
@@ -2525,9 +2525,9 @@ def main():
         
         # Set test dataset for trainer evaluation
         trainer.test_dataset = test_loader.dataset
-        trainer.val_dataset_cache = val_loader.dataset  # Cache validation dataset for quick evaluation
-        print(f"✓ Test dataset loaded for evaluation ({len(test_loader.dataset)} samples)")
-        print(f"✓ Validation dataset cached for quick evaluation ({len(val_loader.dataset)} samples)")
+        trainer.val_dataset_cache = val_loader.dataset # Cache validation dataset for quick evaluation
+        print(f" Test dataset loaded for evaluation ({len(test_loader.dataset)} samples)")
+        print(f" Validation dataset cached for quick evaluation ({len(val_loader.dataset)} samples)")
         
         # Start training
         print("\nStarting training...")
@@ -2546,8 +2546,8 @@ def main():
             
             print(f"\nModel is ready for inference!")
             print(f"Use the checkpoints in: {config.model_save_path}")
-            print(f"  - best_model.pt (best validation loss)")
-            print(f"  - best_translation_model.pt (best translation quality)")
+            print(f" - best_model.pt (best validation loss)")
+            print(f" - best_translation_model.pt (best translation quality)")
         else:
             print("WARNING: No translation history available")
         
