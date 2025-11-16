@@ -1,76 +1,75 @@
 from dataclasses import dataclass
 from typing import Optional
 
-@dataclass
-class BertConfig:
-    """Configuration class for BERT model used in Odia-English translation."""
-    
-    # Model architecture parameters
-    vocab_size: int = 10000  # Combined vocab for Odia + English
+class ImprovedConfig:
     hidden_size: int = 768
-    num_hidden_layers: int = 12
+    num_hidden_layers: int = 8
     num_attention_heads: int = 12
     intermediate_size: int = 3072
-    max_position_embeddings: int = 256
+    max_position_embeddings: int = 512
     
-    # Dropout parameters
+    max_source_length: int = 128
+    max_target_length: int = 128
+    
     hidden_dropout_prob: float = 0.1
     attention_probs_dropout_prob: float = 0.1
+    layer_norm_eps: float = 1e-12
     
-    # Translation specific parameters
-    max_source_length: int = 128  # Max length for Odia input
-    max_target_length: int = 128  # Max length for English output
-    
-    # Special tokens
     pad_token_id: int = 0
     unk_token_id: int = 1
-    cls_token_id: int = 2
-    sep_token_id: int = 3
-    mask_token_id: int = 4
+    bos_token_id: int = 2
+    eos_token_id: int = 3
     
-    # Training parameters
-    learning_rate: float = 2e-5
-    batch_size: int = 4
-    num_epochs: int = 10
-    warmup_steps: int = 1000
+    learning_rate: float = 1e-4
+    min_learning_rate: float = 1e-7
+    batch_size: int = 6
+    num_epochs: int = 20
+    warmup_steps: int = 300
     weight_decay: float = 0.01
+    gradient_clip_norm: float = 1.0
     
-    # Model saving
-    model_save_path: str = "./checkpoints"
-    save_every_n_steps: int = 1000
+    scheduler_type: str = "cosine_with_restarts"
+    cosine_restarts: int = 2
+    scheduler_warmup_ratio: float = 0.1
     
-    def __post_init__(self):
-        """Validate configuration parameters."""
-        assert self.hidden_size % self.num_attention_heads == 0, \
-            "hidden_size must be divisible by num_attention_heads"
-        assert self.max_source_length <= self.max_position_embeddings, \
-            "max_source_length cannot exceed max_position_embeddings"
-        assert self.max_target_length <= self.max_position_embeddings, \
-            "max_target_length cannot exceed max_position_embeddings"
+    model_save_path: str = "./improved_checkpoints"
+    save_every_n_steps: int = 500
+    
+    pretrained_model_name: str = "google/mt5-small"
+    use_pretrained_t5: bool = True
+    vocab_size: int = 250112
+    
+    emergency_fallback_cpu: bool = True
+    emergency_fallback_model: str = "t5-small"
+    force_cpu_training: bool = False
+    
+    freeze_t5_layers: int = 2
+    t5_dropout: float = 0.1
+    
+    use_rope: bool = True
+    rope_theta: float = 10000.0
+    rope_scaling: Optional[str] = None
+    
+    use_mixed_precision: bool = False
+    accumulate_grad_batches: int = 4
+    label_smoothing: float = 0.1
+    
+    use_data_parallel: bool = True
+    device_ids: list = None
 
 @dataclass
 class DataConfig:
-    """Configuration for dataset processing."""
-    
-    # Dataset paths
     train_data_path: str = "./data/train.txt"
     val_data_path: str = "./data/val.txt"
     test_data_path: str = "./data/test.txt"
     
-    # Tokenizer paths
-    odia_vocab_path: str = "./vocab/odia_vocab.txt"
-    english_vocab_path: str = "./vocab/english_vocab.txt"
-    
-    # Data processing
     min_sentence_length: int = 3
     max_sentence_length: int = 200
-    train_test_split: float = 0.9
+    train_test_split: float = 0.8
     val_split: float = 0.1
     
-    # Data augmentation
-    use_data_augmentation: bool = False
+    use_data_augmentation: bool = True
     augmentation_prob: float = 0.1
 
-# Default configurations
-DEFAULT_BERT_CONFIG = BertConfig()
+DEFAULT_CONFIG = ImprovedConfig()
 DEFAULT_DATA_CONFIG = DataConfig()

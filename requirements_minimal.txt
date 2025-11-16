@@ -1,0 +1,4 @@
+# Minimal requirements for Odia-English Translation Inference
+torch>=2.0.0
+transformers>=4.20.0
+numpy

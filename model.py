@@ -1,186 +1,280 @@
 import torch
 import torch.nn as nn
-from dataclasses import dataclass
-import math
-from torch.nn import functional as F
+import torch.nn.functional as F
+from config import ImprovedConfig
+from tokenizer import RoPEPositionalEmbedding
 
-class BertEmbeddings(nn.Module):
-    def __init__(self, config):
+try:
+    from transformers import MT5ForConditionalGeneration
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+
+class T5TranslationModel(nn.Module):
+    def __init__(self, config: ImprovedConfig):
         super().__init__()
-        self.config = config  # Store config for later use
-        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size)
+        self.config = config
+        
+        if not TRANSFORMERS_AVAILABLE:
+            raise ImportError("transformers library required for T5 model")
+        
+        from transformers import MT5ForConditionalGeneration
+        
+        try:
+            self.t5_model = MT5ForConditionalGeneration.from_pretrained(
+                config.pretrained_model_name,
+                torch_dtype=torch.float32,
+                low_cpu_mem_usage=True,
+            )
+            self.t5_config = self.t5_model.config
+            
+            param_count = sum(p.numel() for p in self.t5_model.parameters())
+            trainable_params = sum(p.numel() for p in self.t5_model.parameters() if p.requires_grad)
+            nan_params = sum(1 for p in self.t5_model.parameters() if torch.isnan(p).any())
+            
+            if nan_params > 0:
+                for name, param in self.t5_model.named_parameters():
+                    if torch.isnan(param).any():
+                        torch.nn.init.normal_(param, mean=0.0, std=0.02)
+            
+        except Exception as e:
+            raise e
+        
+        self.hidden_size = self.t5_config.d_model
+        config.vocab_size = self.t5_config.vocab_size
+        
+        if getattr(config, 'use_rope', True):
+            self.rope_embedding = RoPEPositionalEmbedding(
+                dim=self.hidden_size // self.t5_config.num_heads,
+                max_position_embeddings=config.max_position_embeddings,
+                base=getattr(config, 'rope_theta', 10000.0)
+            )
+            
+            self._replace_attention_with_rope()
+        else:
+            self.rope_embedding = None
+        
+        freeze_layers = max(0, config.freeze_t5_layers - 1)
+        if freeze_layers > 0:
+            frozen_params = 0
+            for i, layer in enumerate(self.t5_model.encoder.block):
+                if i < freeze_layers:
+                    for param in layer.parameters():
+                        param.requires_grad = False
+                        frozen_params += param.numel()
+        
+        if hasattr(config, 'label_smoothing') and config.label_smoothing > 0:
+            self.loss_fn = nn.CrossEntropyLoss(ignore_index=config.pad_token_id, label_smoothing=config.label_smoothing)
+        else:
+            self.loss_fn = nn.CrossEntropyLoss(ignore_index=config.pad_token_id)
+        
+        total_params = sum(p.numel() for p in self.parameters())
+        trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+    
+    def _replace_attention_with_rope(self):
+        pass
+    
+    def _prepare_input_ids_for_generation(self, input_ids):
+        return input_ids
+    
+    def forward(self, input_ids: torch.Tensor, labels: torch.Tensor = None):
+        attention_mask = (input_ids != self.config.pad_token_id).long()
+        
+        vocab_size = self.t5_config.vocab_size
+        if input_ids.max().item() >= vocab_size:
+            input_ids = torch.clamp(input_ids, 0, vocab_size - 1)
+        
+        if labels is not None and labels.max().item() >= vocab_size:
+            labels = torch.clamp(labels, 0, vocab_size - 1)
+        
+        try:
+            outputs = self.t5_model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=labels
+            )
+            
+            if labels is not None:
+                loss = outputs.loss
+                
+                if not torch.isfinite(loss):
+                    loss = torch.tensor(0.01, device=loss.device, requires_grad=True)
+                
+                if hasattr(loss, 'dim') and loss.dim() > 0:
+                    loss = loss.mean()
+                
+                return loss, outputs.logits
+            else:
+                return outputs.logits
+                
+        except Exception as e:
+            raise e
+    
+    def compute_loss(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+        
+        loss = self.loss_fn(
+            shift_logits.view(-1, shift_logits.size(-1)),
+            shift_labels.view(-1)
+        )
+        return loss
+    
+    def generate(self, input_ids: torch.Tensor, max_length: int = 50, temperature: float = 1.0, 
+                 do_sample: bool = False, top_p: float = 0.9, num_beams: int = 1, **kwargs) -> torch.Tensor:
+        self.eval()
+        
+        with torch.no_grad():
+            attention_mask = (input_ids != self.config.pad_token_id).long()
+            
+            generation_config = {
+                'max_length': max_length,
+                'pad_token_id': self.config.pad_token_id,
+                'eos_token_id': self.config.eos_token_id,
+                'early_stopping': True,
+                'use_cache': True,
+                'do_sample': do_sample,
+                'temperature': temperature if do_sample else 1.0,
+                'top_p': top_p if do_sample else 1.0,
+                'num_beams': num_beams,
+            }
+            
+            generation_config.update(kwargs)
+            
+            generated_ids = self.t5_model.generate(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                **generation_config
+            )
+            
+        return generated_ids
+
+class ImprovedTransformerModel(nn.Module):
+    def __init__(self, config: ImprovedConfig):
+        super().__init__()
+        self.config = config
+        
+        self.embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
         self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
-        self.token_type_embeddings = nn.Embedding(2, config.hidden_size)  
-        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=1e-12)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=config.hidden_size,
+            nhead=config.num_attention_heads,
+            dim_feedforward=config.intermediate_size,
+            dropout=config.hidden_dropout_prob,
+            activation='gelu',
+            batch_first=True
+        )
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=config.num_hidden_layers)
+        
+        decoder_layer = nn.TransformerDecoderLayer(
+            d_model=config.hidden_size,
+            nhead=config.num_attention_heads,
+            dim_feedforward=config.intermediate_size,
+            dropout=config.hidden_dropout_prob,
+            activation='gelu',
+            batch_first=True
+        )
+        self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=config.num_hidden_layers)
+        
+        self.output_projection = nn.Linear(config.hidden_size, config.vocab_size)
+        
+        if hasattr(config, 'label_smoothing') and config.label_smoothing > 0:
+            self.loss_fn = nn.CrossEntropyLoss(ignore_index=config.pad_token_id, label_smoothing=config.label_smoothing)
+        else:
+            self.loss_fn = nn.CrossEntropyLoss(ignore_index=config.pad_token_id)
+        
+        self.apply(self._init_weights)
     
-    def forward(self, input_ids, token_type_ids=None):
-        seq_length = input_ids.size(1)
-        
-        # Check for sequence length bounds
-        if seq_length > self.config.max_position_embeddings:
-            raise ValueError(f"Sequence length {seq_length} exceeds max_position_embeddings {self.config.max_position_embeddings}")
-        
-        # Check for valid token IDs (exclude padding tokens which are 0)
-        valid_mask = input_ids != self.config.pad_token_id  # Don't check padding tokens
-        valid_input_ids = input_ids[valid_mask]
-        if len(valid_input_ids) > 0 and (torch.any(valid_input_ids >= self.config.vocab_size) or torch.any(valid_input_ids < 0)):
-            invalid_tokens = valid_input_ids[(valid_input_ids >= self.config.vocab_size) | (valid_input_ids < 0)]
-            raise ValueError(f"Invalid token IDs found: {invalid_tokens.unique().tolist()}. Vocab size: {self.config.vocab_size}")
-        
-        position_ids = torch.arange(seq_length, dtype=torch.long, device=input_ids.device)
-        position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
-        
-        if token_type_ids is None:
-            token_type_ids = torch.zeros_like(input_ids)
-        
-        # Ensure position_ids are within bounds
-        position_ids = torch.clamp(position_ids, 0, self.config.max_position_embeddings - 1)
-        
-        words_embeddings = self.word_embeddings(input_ids)
-        position_embeddings = self.position_embeddings(position_ids)
-        token_type_embeddings = self.token_type_embeddings(token_type_ids)
-        
-        embeddings = words_embeddings + position_embeddings + token_type_embeddings
-        embeddings = self.LayerNorm(embeddings)
-        embeddings = self.dropout(embeddings)
-        return embeddings
-
-class BertSelfAttention(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        assert config.hidden_size % config.num_attention_heads == 0
-        self.config = config
-        self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = config.hidden_size // config.num_attention_heads
-        
-        self.query = nn.Linear(config.hidden_size, config.hidden_size)
-        self.key = nn.Linear(config.hidden_size, config.hidden_size)
-        self.value = nn.Linear(config.hidden_size, config.hidden_size)
-        
-        self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            torch.nn.init.xavier_uniform_(module.weight)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.xavier_uniform_(module.weight)
+            if module.padding_idx is not None:
+                with torch.no_grad():
+                    module.weight[module.padding_idx].fill_(0)
     
-    def transpose_for_scores(self, x):
-        batch_size, seq_length, _ = x.size()
-        x = x.view(batch_size, seq_length, self.num_attention_heads, self.attention_head_size)
-        return x.transpose(1, 2)
+    def create_padding_mask(self, x, pad_token_id):
+        return (x == pad_token_id)
     
-    def forward(self, hidden_states):
-        batch_size, seq_length, hidden_size = hidden_states.size()
+    def create_causal_mask(self, size):
+        mask = torch.triu(torch.ones(size, size), diagonal=1)
+        return mask.bool()
+    
+    def forward(self, src_ids, tgt_ids=None, src_mask=None, tgt_mask=None):
+        batch_size, src_len = src_ids.shape
         
-        query_layer = self.transpose_for_scores(self.query(hidden_states))
-        key_layer = self.transpose_for_scores(self.key(hidden_states))
-        value_layer = self.transpose_for_scores(self.value(hidden_states))
+        src_pos = torch.arange(src_len, device=src_ids.device).unsqueeze(0).expand(batch_size, -1)
+        src_emb = self.embeddings(src_ids) + self.position_embeddings(src_pos)
         
-        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
-        attention_scores = attention_scores / math.sqrt(self.attention_head_size)
+        if src_mask is None:
+            src_key_padding_mask = self.create_padding_mask(src_ids, self.config.pad_token_id)
+        else:
+            src_key_padding_mask = src_mask
         
-        attention_probs = F.softmax(attention_scores, dim=-1)
-        attention_probs = self.dropout(attention_probs)
+        memory = self.encoder(src_emb, src_key_padding_mask=src_key_padding_mask)
         
-        context_layer = torch.matmul(attention_probs, value_layer)
-        context_layer = context_layer.transpose(1, 2).contiguous()
-        context_layer = context_layer.view(batch_size, seq_length, hidden_size)
+        if tgt_ids is not None:
+            tgt_len = tgt_ids.shape[1]
+            tgt_pos = torch.arange(tgt_len, device=tgt_ids.device).unsqueeze(0).expand(batch_size, -1)
+            tgt_emb = self.embeddings(tgt_ids) + self.position_embeddings(tgt_pos)
+            
+            tgt_key_padding_mask = self.create_padding_mask(tgt_ids, self.config.pad_token_id)
+            tgt_causal_mask = self.create_causal_mask(tgt_len).to(tgt_ids.device)
+            
+            output = self.decoder(
+                tgt_emb, 
+                memory,
+                tgt_mask=tgt_causal_mask,
+                tgt_key_padding_mask=tgt_key_padding_mask,
+                memory_key_padding_mask=src_key_padding_mask
+            )
+            
+            logits = self.output_projection(output)
+            return logits
+        else:
+            return memory
+    
+    def generate(self, src_ids, max_length=50, temperature=1.0):
+        self.eval()
+        batch_size = src_ids.shape[0]
+        device = src_ids.device
         
-        return context_layer
-
-class BertSelfOutput(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
-        self.LayerNorm = nn.LayerNorm(config.hidden_size)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-    
-    def forward(self, hidden_states, input_tensor):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
-        return hidden_states
-
-class BertAttention(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.self = BertSelfAttention(config)
-        self.output = BertSelfOutput(config)
-    
-    def forward(self, hidden_states):
-        self_outputs = self.self(hidden_states)
-        attention_output = self.output(self_outputs, hidden_states)
-        return attention_output
-
-class BertIntermediate(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
-        self.intermediate_act_fn = nn.GELU()
-    
-    def forward(self, hidden_states):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.intermediate_act_fn(hidden_states)
-        return hidden_states
-
-class BertOutput(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
-        self.LayerNorm = nn.LayerNorm(config.hidden_size)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-    
-    def forward(self, hidden_states, input_tensor):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
-        return hidden_states
-
-class BertLayer(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.attention = BertAttention(config)
-        self.intermediate = BertIntermediate(config)
-        self.output = BertOutput(config)
-    
-    def forward(self, hidden_states):
-        attention_output = self.attention(hidden_states)
-        intermediate_output = self.intermediate(attention_output)
-        layer_output = self.output(intermediate_output, attention_output)
-        return layer_output
-
-class BertEncoder(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
-    
-    def forward(self, hidden_states):
-        for layer_module in self.layer:
-            hidden_states = layer_module(hidden_states)
-        return hidden_states
-
-class BertModel(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.config = config
-        self.embeddings = BertEmbeddings(config)
-        self.encoder = BertEncoder(config)
-        self.pooler = nn.Linear(config.hidden_size, config.hidden_size)
-        self.pooler_activation = nn.Tanh()
-    
-    def forward(self, input_ids, token_type_ids=None):
-        embedding_output = self.embeddings(input_ids, token_type_ids)
-        encoder_output = self.encoder(embedding_output)
-        
-        pooled_output = self.pooler(encoder_output[:, 0])
-        pooled_output = self.pooler_activation(pooled_output)
-        
-        return encoder_output, pooled_output
-
-class BertForMaskedLM(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.bert = BertModel(config)
-        self.cls = nn.Linear(config.hidden_size, config.vocab_size)
-    
-    def forward(self, input_ids, token_type_ids=None):
-        sequence_output, pooled_output = self.bert(input_ids, token_type_ids)
-        prediction_scores = self.cls(sequence_output)
-        return prediction_scores
-
+        with torch.no_grad():
+            memory = self.forward(src_ids)
+            
+            tgt_ids = torch.full((batch_size, 1), self.config.bos_token_id, dtype=torch.long, device=device)
+            
+            for _ in range(max_length - 1):
+                tgt_len = tgt_ids.shape[1]
+                
+                tgt_pos = torch.arange(tgt_len, device=device).unsqueeze(0).expand(batch_size, -1)
+                tgt_emb = self.embeddings(tgt_ids) + self.position_embeddings(tgt_pos)
+                
+                src_key_padding_mask = self.create_padding_mask(src_ids, self.config.pad_token_id)
+                tgt_causal_mask = self.create_causal_mask(tgt_len).to(device)
+                
+                output = self.decoder(
+                    tgt_emb,
+                    memory,
+                    tgt_mask=tgt_causal_mask,
+                    memory_key_padding_mask=src_key_padding_mask
+                )
+                
+                next_token_logits = self.output_projection(output[:, -1, :])
+                
+                if temperature != 1.0:
+                    next_token_logits = next_token_logits / temperature
+                
+                next_token_probs = F.softmax(next_token_logits, dim=-1)
+                next_token = torch.multinomial(next_token_probs, num_samples=1)
+                
+                tgt_ids = torch.cat([tgt_ids, next_token], dim=1)
+                
+                if (next_token == self.config.eos_token_id).all():
+                    break
+            
+        return tgt_ids

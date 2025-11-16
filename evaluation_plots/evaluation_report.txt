@@ -1,0 +1,67 @@
+TRANSLATION QUALITY EVALUATION REPORT
+============================================================
+
+OVERALL PERFORMANCE:
+------------------------------
+Average BLEU Score: 0.1389
+Average Word Overlap: 0.3803
+Best BLEU Score: 0.4168 (Sentence 3)
+Worst BLEU Score: 0.0000 (Sentence 1)
+
+DETAILED SENTENCE ANALYSIS:
+============================================================
+
+SENTENCE 1:
+--------------------
+Odia: ଏହି ଟେଲିଭିଜନ ପୁରସ୍କାର ସମାରୋହ 2021 କାର୍ଯ୍ୟକ୍ରମ ତୁଳନାରେ ପ୍ରାୟ 1.5 ନିୟୁତ ଦର୍ଶକଙ୍କୁ ହରାଇଥିଲା ।
+
+Model Translation:
+The telescope created nearly 1.5 million viewers in the 2021 program.
+
+Reference Translation:
+The television awards ceremony lost roughly 1.5 million viewers compared to its 2021 program.
+
+BLEU Score: 0.0000
+Word Overlap: 0.3333
+1-gram Precision: 0.5455
+2-gram Precision: 0.3000
+3-gram Precision: 0.1111
+4-gram Precision: 0.0000
+
+============================================================
+
+SENTENCE 2:
+--------------------
+Odia: ପୂର୍ବରେ ଋଷିଆ ସେନା ବିରୋଧରେ ୟୁକ୍ରେନୀୟ ସେନା ପକ୍ଷରୁ ଜାରି ହୋଇଥିବା ପ୍ରତିଆକ୍ରମଣରେ ନୂଆ ସଫଳତା ମିଳିଛି ।
+
+Model Translation:
+There's a new success in the Russia military against the Russian force, said the U.S. government.
+
+Reference Translation:
+Ukrainian forces are claiming new success in their counteroffensive against Russian forces in the east.
+
+BLEU Score: 0.0000
+Word Overlap: 0.2857
+1-gram Precision: 0.3750
+2-gram Precision: 0.2000
+3-gram Precision: 0.0714
+4-gram Precision: 0.0000
+
+============================================================
+
+SENTENCE 3:
+--------------------
+Odia: ଏମଏଲବି ଖେଳାଳି ସଂଘ ଶେଷରେ ଏଏଫଏଲ-ସିଆଇଓର ସଦସ୍ୟ ହେବ ଏବଂ ବିଭିନ୍ନ ଶିଳ୍ପର ଅନ୍ୟ ୫୭ଟି ସଂଘ ସହିତ ଯୋଡ଼ି ହେବ ।
+
+Model Translation:
+The MLB Players Association will be a member of the AFL-CIO and another 75 other unions with other projects.
+
+Reference Translation:
+The MLB Players Association will finally be a member of the AFL-CIO, affiliating with 57 other unions across industries.
+
+BLEU Score: 0.4168
+Word Overlap: 0.5217
+1-gram Precision: 0.6842
+2-gram Precision: 0.5000
+3-gram Precision: 0.3529
+4-gram Precision: 0.2500

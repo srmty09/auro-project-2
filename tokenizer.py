@@ -1,348 +1,204 @@
-import os
-import re
-import json
-from typing import List, Dict, Set, Tuple, Optional
-from collections import Counter, defaultdict
-from config import BertConfig
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+from typing import List, Optional, Tuple
+from config import ImprovedConfig
 
-class ManualTokenizer:
-    """Manual tokenizer for Odia and English text processing."""
-    
-    def __init__(self, config: BertConfig):
-        """
-        Initialize the tokenizer.
-        
-        Args:
-            config: BERT configuration containing vocab parameters
-        """
+try:
+    from transformers import MT5Tokenizer, T5Tokenizer
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+
+class ImprovedTokenizer:
+    def __init__(self, config: ImprovedConfig):
         self.config = config
         
-        # Special tokens
-        self.special_tokens = {
-            '[PAD]': config.pad_token_id,
-            '[UNK]': config.unk_token_id,
-            '[CLS]': config.cls_token_id,
-            '[SEP]': config.sep_token_id,
-            '[MASK]': config.mask_token_id,
-        }
-        
-        # Vocabulary dictionaries
-        self.odia_vocab = {}
-        self.english_vocab = {}
-        self.odia_id_to_token = {}
-        self.english_id_to_token = {}
-        
-        # Combined vocabulary for the model
-        self.combined_vocab = {}
-        self.id_to_token = {}
-        
-        # Initialize vocabularies
-        self._initialize_vocabularies()
+        if TRANSFORMERS_AVAILABLE:
+            try:
+                from transformers import MT5Tokenizer
+                self.tokenizer = MT5Tokenizer.from_pretrained(config.pretrained_model_name)
+                
+                self.config.vocab_size = len(self.tokenizer)
+                
+                self.config.pad_token_id = self.tokenizer.pad_token_id
+                self.config.unk_token_id = self.tokenizer.unk_token_id
+                self.config.bos_token_id = self.tokenizer.pad_token_id
+                self.config.eos_token_id = self.tokenizer.eos_token_id
+                
+                test_odia = "ମୁଁ ଭଲ ଅଛି"
+                test_tokens = self.tokenizer.encode(test_odia)
+                test_decoded = self.tokenizer.decode(test_tokens, skip_special_tokens=True)
+                
+                unk_count = sum(1 for token_id in test_tokens if token_id == self.tokenizer.unk_token_id)
+                
+                self.use_pretrained = True
+                
+            except Exception as e:
+                try:
+                    self.tokenizer = T5Tokenizer.from_pretrained("t5-small")
+                    self.use_pretrained = True
+                except:
+                    self.use_pretrained = False
+                    self._create_simple_tokenizer()
+        else:
+            self.use_pretrained = False
+            self._create_simple_tokenizer()
     
-    def _initialize_vocabularies(self):
-        """Initialize vocabularies with special tokens and basic tokens."""
-        # Start with special tokens
-        current_id = 0
+    def _create_simple_tokenizer(self):
+        self.vocab = {'[PAD]': 0, '[UNK]': 1, '[BOS]': 2, '[EOS]': 3}
+        self.id_to_token = {0: '[PAD]', 1: '[UNK]', 2: '[BOS]', 3: '[EOS]'}
         
-        # Add special tokens to combined vocab
-        for token, token_id in self.special_tokens.items():
-            self.combined_vocab[token] = token_id
-            self.id_to_token[token_id] = token
-            current_id = max(current_id, token_id + 1)
+        chars = list('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?;: ')
+        odia_chars = ['ମ', 'ୁ', 'ଁ', 'ଭ', 'ଲ', 'ଅ', 'ଛ', 'ି', 'ତ', 'ୁ', 'ର', 'ନ', 'ା', 'କ', 'ଣ', 'ଆ', 'ଜ', 'ବ', 'ହ', 'ୱ', 'ସ', 'ୟ', 'ଗ', 'ପ', 'ଦ', 'ଘ', 'ଡ', 'ଢ', 'ଫ', 'ଧ', 'ଥ', 'ଶ', 'ଷ', 'ଇ', 'ଈ', 'ଉ', 'ଊ', 'ଋ', 'ଏ', 'ଐ', 'ଓ', 'ଔ', '୍', 'ଂ', 'ଃ', '଼', '।', '॥']
         
-        # Create basic Odia and English vocabularies
-        self._create_basic_odia_vocab(current_id)
-        self._create_basic_english_vocab(current_id + 1000)  # Offset for English
-    
-    def _create_basic_odia_vocab(self, start_id: int):
-        """Create basic Odia vocabulary with common characters and words."""
-        # Odia Unicode characters (basic set)
-        odia_chars = [
-            # Vowels
-            'ଅ', 'ଆ', 'ଇ', 'ଈ', 'ଉ', 'ଊ', 'ଋ', 'ଏ', 'ଐ', 'ଓ', 'ଔ',
-            # Consonants
-            'କ', 'ଖ', 'ଗ', 'ଘ', 'ଙ',
-            'ଚ', 'ଛ', 'ଜ', 'ଝ', 'ଞ',
-            'ଟ', 'ଠ', 'ଡ', 'ଢ', 'ଣ',
-            'ତ', 'ଥ', 'ଦ', 'ଧ', 'ନ',
-            'ପ', 'ଫ', 'ବ', 'ଭ', 'ମ',
-            'ଯ', 'ର', 'ଲ', 'ଳ', 'ଵ', 'ଶ', 'ଷ', 'ସ', 'ହ',
-            # Vowel signs
-            'ା', 'ି', 'ୀ', 'ୁ', 'ୂ', 'ୃ', 'େ', 'ୈ', 'ୋ', 'ୌ', '୍',
-            # Numbers
-            '୦', '୧', '୨', '୩', '୪', '୫', '୬', '୭', '୮', '୯'
-        ]
-        
-        # Common Odia words
-        common_odia_words = [
-            'ମୁଁ', 'ତୁମେ', 'ସେ', 'ଆମେ', 'ତୁମମାନେ', 'ସେମାନେ',
-            'ଅଛି', 'ଅଛୁ', 'ଅଛନ୍ତି', 'ଥିଲା', 'ଥିଲି', 'ଥିଲେ',
-            'କରୁଛି', 'କରିବି', 'କରିଛି', 'କରିଥିଲି',
-            'ଭଲ', 'ଖରାପ', 'ବଡ଼', 'ଛୋଟ', 'ନୂଆ', 'ପୁରୁଣା',
-            'ଘର', 'ସ୍କୁଲ', 'କାମ', 'ଖାଦ୍ୟ', 'ପାଣି', 'ପୁସ୍ତକ',
-            'ନାମ', 'ସମୟ', 'ଦିନ', 'ରାତି', 'ସକାଳ', 'ସନ୍ଧ୍ୟା',
-            'କଣ', 'କିଏ', 'କେଉଁଠି', 'କେବେ', 'କିପରି', 'କାହିଁକି',
-            'ଏବଂ', 'କିନ୍ତୁ', 'ଯଦି', 'ତେବେ', 'କିମ୍ବା', 'ନା'
-        ]
-        
-        current_id = start_id
-        
-        # Add characters
-        for char in odia_chars:
-            if char not in self.combined_vocab:
-                self.odia_vocab[char] = current_id
-                self.combined_vocab[char] = current_id
+        current_id = 4
+        for char in chars + odia_chars:
+            if char not in self.vocab:
+                self.vocab[char] = current_id
                 self.id_to_token[current_id] = char
                 current_id += 1
         
-        # Add common words
-        for word in common_odia_words:
-            if word not in self.combined_vocab:
-                self.odia_vocab[word] = current_id
-                self.combined_vocab[word] = current_id
-                self.id_to_token[current_id] = word
-                current_id += 1
+        self.config.vocab_size = len(self.vocab)
     
-    def _create_basic_english_vocab(self, start_id: int):
-        """Create basic English vocabulary."""
-        # English alphabet
-        english_chars = list('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
-        
-        # Common English words
-        common_english_words = [
-            'i', 'you', 'he', 'she', 'it', 'we', 'they',
-            'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-            'can', 'could', 'should', 'may', 'might', 'must',
-            'the', 'a', 'an', 'this', 'that', 'these', 'those',
-            'good', 'bad', 'big', 'small', 'new', 'old', 'young',
-            'house', 'school', 'work', 'food', 'water', 'book',
-            'name', 'time', 'day', 'night', 'morning', 'evening',
-            'what', 'who', 'where', 'when', 'how', 'why',
-            'and', 'but', 'if', 'then', 'or', 'not', 'no', 'yes',
-            'hello', 'hi', 'bye', 'please', 'thank', 'sorry'
-        ]
-        
-        current_id = start_id
-        
-        # Add characters
-        for char in english_chars:
-            if char not in self.combined_vocab:
-                self.english_vocab[char] = current_id
-                self.combined_vocab[char] = current_id
-                self.id_to_token[current_id] = char
-                current_id += 1
-        
-        # Add common words
-        for word in common_english_words:
-            if word not in self.combined_vocab:
-                self.english_vocab[word] = current_id
-                self.combined_vocab[word] = current_id
-                self.id_to_token[current_id] = word
-                current_id += 1
-    
-    def _preprocess_text(self, text: str, is_odia: bool = True) -> str:
-        """Preprocess text before tokenization."""
-        # Convert to lowercase for English
-        if not is_odia:
-            text = text.lower()
-        
-        # Remove extra whitespace
-        text = re.sub(r'\s+', ' ', text.strip())
-        
-        # Handle punctuation
-        text = re.sub(r'([.!?])', r' \1 ', text)
-        text = re.sub(r'([,;:])', r' \1 ', text)
-        
-        return text
-    
-    def tokenize(self, text: str, is_odia: bool = True) -> List[str]:
-        """
-        Tokenize text into tokens.
-        
-        Args:
-            text: Input text to tokenize
-            is_odia: Whether the text is in Odia (True) or English (False)
-        
-        Returns:
-            List of tokens
-        """
-        text = self._preprocess_text(text, is_odia)
-        
-        if is_odia:
-            return self._tokenize_odia(text)
+    def tokenize(self, text: str, max_length: Optional[int] = None) -> List[int]:
+        if self.use_pretrained:
+            tokens = self.tokenizer.encode(
+                text,
+                add_special_tokens=False,
+                max_length=max_length,
+                truncation=True if max_length else False,
+                padding=False
+            )
+            return tokens
         else:
-            return self._tokenize_english(text)
-    
-    def _tokenize_odia(self, text: str) -> List[str]:
-        """Tokenize Odia text."""
-        tokens = []
-        words = text.split()
-        
-        for word in words:
-            # Check if word exists in vocabulary
-            if word in self.odia_vocab:
-                tokens.append(word)
-            else:
-                # Character-level tokenization for unknown words
-                for char in word:
-                    if char in self.odia_vocab:
-                        tokens.append(char)
-                    else:
-                        tokens.append('[UNK]')
-        
-        return tokens
-    
-    def _tokenize_english(self, text: str) -> List[str]:
-        """Tokenize English text."""
-        tokens = []
-        words = text.split()
-        
-        for word in words:
-            # Remove punctuation for word lookup
-            clean_word = re.sub(r'[^\w]', '', word)
+            tokens = []
+            for char in text:
+                if char in self.vocab:
+                    tokens.append(self.vocab[char])
+                else:
+                    tokens.append(self.config.unk_token_id)
             
-            if clean_word in self.english_vocab:
-                tokens.append(clean_word)
-                # Add punctuation as separate tokens
-                punct = re.findall(r'[^\w]', word)
-                tokens.extend(punct)
-            else:
-                # Subword tokenization (simple character-level for unknown words)
-                for char in word:
-                    if char in self.english_vocab:
-                        tokens.append(char)
-                    elif char.isspace():
-                        continue
-                    else:
-                        tokens.append('[UNK]')
-        
-        return [token for token in tokens if token.strip()]
-    
-    def convert_tokens_to_ids(self, tokens: List[str], is_odia: bool = True) -> List[int]:
-        """Convert tokens to IDs."""
-        ids = []
-        for token in tokens:
-            if token in self.combined_vocab:
-                ids.append(self.combined_vocab[token])
-            else:
-                ids.append(self.config.unk_token_id)
-        return ids
-    
-    def convert_ids_to_tokens(self, ids: List[int]) -> List[str]:
-        """Convert IDs to tokens."""
-        tokens = []
-        for id in ids:
-            if id in self.id_to_token:
-                tokens.append(self.id_to_token[id])
-            else:
-                tokens.append('[UNK]')
-        return tokens
-    
-    def decode(self, ids: List[int], skip_special_tokens: bool = True) -> str:
-        """Decode token IDs back to text."""
-        tokens = self.convert_ids_to_tokens(ids)
-        
-        if skip_special_tokens:
-            tokens = [token for token in tokens if token not in self.special_tokens]
-        
-        # Simple joining - can be improved with proper detokenization
-        text = ' '.join(tokens)
-        
-        # Clean up spacing around punctuation
-        text = re.sub(r' ([.!?,:;])', r'\1', text)
-        text = re.sub(r'\s+', ' ', text.strip())
-        
-        return text
-    
-    def save_vocab(self, vocab_dir: str):
-        """Save vocabulary to files."""
-        os.makedirs(vocab_dir, exist_ok=True)
-        
-        # Save combined vocabulary
-        vocab_file = os.path.join(vocab_dir, 'vocab.json')
-        with open(vocab_file, 'w', encoding='utf-8') as f:
-            json.dump(self.combined_vocab, f, ensure_ascii=False, indent=2)
-        
-        # Save ID to token mapping
-        id_to_token_file = os.path.join(vocab_dir, 'id_to_token.json')
-        with open(id_to_token_file, 'w', encoding='utf-8') as f:
-            # Convert int keys to strings for JSON serialization
-            id_to_token_str = {str(k): v for k, v in self.id_to_token.items()}
-            json.dump(id_to_token_str, f, ensure_ascii=False, indent=2)
-        
-        print(f"Vocabulary saved to {vocab_dir}")
-        print(f"Total vocabulary size: {len(self.combined_vocab)}")
-    
-    def load_vocab(self, vocab_dir: str):
-        """Load vocabulary from files."""
-        vocab_file = os.path.join(vocab_dir, 'vocab.json')
-        id_to_token_file = os.path.join(vocab_dir, 'id_to_token.json')
-        
-        if os.path.exists(vocab_file) and os.path.exists(id_to_token_file):
-            with open(vocab_file, 'r', encoding='utf-8') as f:
-                self.combined_vocab = json.load(f)
+            if max_length and len(tokens) > max_length:
+                tokens = tokens[:max_length]
             
-            with open(id_to_token_file, 'r', encoding='utf-8') as f:
-                id_to_token_str = json.load(f)
-                # Convert string keys back to integers
-                self.id_to_token = {int(k): v for k, v in id_to_token_str.items()}
-            
-            print(f"Vocabulary loaded from {vocab_dir}")
-            print(f"Total vocabulary size: {len(self.combined_vocab)}")
+            return tokens
+    
+    def decode(self, token_ids: List[int], skip_special_tokens: bool = True) -> str:
+        if self.use_pretrained:
+            return self.tokenizer.decode(token_ids, skip_special_tokens=skip_special_tokens)
         else:
-            print(f"Vocabulary files not found in {vocab_dir}. Using default vocabulary.")
+            tokens = []
+            for token_id in token_ids:
+                if token_id in self.id_to_token:
+                    token = self.id_to_token[token_id]
+                    if not skip_special_tokens or not token.startswith('['):
+                        tokens.append(token)
+                else:
+                    if not skip_special_tokens:
+                        tokens.append('[UNK]')
+            return ''.join(tokens)
     
     def get_vocab_size(self) -> int:
-        """Get the size of the vocabulary."""
-        return len(self.combined_vocab)
-    
-    def expand_vocab_from_corpus(self, corpus_file: str, max_vocab_size: int = 30000):
-        """Expand vocabulary by analyzing a corpus file."""
-        if not os.path.exists(corpus_file):
-            print(f"Corpus file {corpus_file} not found. Skipping vocabulary expansion.")
-            return
-        
-        print(f"Expanding vocabulary from {corpus_file}...")
-        
-        word_counts = Counter()
-        
-        with open(corpus_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if '\t' in line:
-                    odia_sent, english_sent = line.split('\t', 1)
-                    
-                    # Process Odia sentence
-                    odia_tokens = self.tokenize(odia_sent, is_odia=True)
-                    word_counts.update(odia_tokens)
-                    
-                    # Process English sentence
-                    english_tokens = self.tokenize(english_sent, is_odia=False)
-                    word_counts.update(english_tokens)
-        
-        # Add most frequent words to vocabulary
-        current_vocab_size = len(self.combined_vocab)
-        remaining_slots = max_vocab_size - current_vocab_size
-        
-        most_common = word_counts.most_common(remaining_slots)
-        
-        current_id = max(self.id_to_token.keys()) + 1 if self.id_to_token else 0
-        
-        for word, count in most_common:
-            if word not in self.combined_vocab:
-                self.combined_vocab[word] = current_id
-                self.id_to_token[current_id] = word
-                current_id += 1
-        
-        print(f"Added {len(most_common)} new words to vocabulary")
-        print(f"Final vocabulary size: {len(self.combined_vocab)}")
+        return self.config.vocab_size
 
-def create_tokenizer(config: BertConfig, corpus_file: Optional[str] = None) -> ManualTokenizer:
-    """Create and initialize a tokenizer."""
-    tokenizer = ManualTokenizer(config)
+class RoPEPositionalEmbedding(nn.Module):
+    def __init__(self, dim: int, max_position_embeddings: int = 2048, base: float = 10000.0):
+        super().__init__()
+        self.dim = dim
+        self.max_position_embeddings = max_position_embeddings
+        self.base = base
+        
+        inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2).float() / dim))
+        self.register_buffer('inv_freq', inv_freq)
+        
+        self._cos_cached = None
+        self._sin_cached = None
+        self._seq_len_cached = 0
     
-    if corpus_file and os.path.exists(corpus_file):
-        tokenizer.expand_vocab_from_corpus(corpus_file, config.vocab_size)
+    def _update_cos_sin_cache(self, seq_len: int, device: torch.device, dtype: torch.dtype):
+        if seq_len > self._seq_len_cached or self._cos_cached is None:
+            self._seq_len_cached = seq_len
+            
+            t = torch.arange(seq_len, device=device, dtype=self.inv_freq.dtype)
+            
+            freqs = torch.einsum('i,j->ij', t, self.inv_freq)
+            
+            emb = torch.cat((freqs, freqs), dim=-1)
+            
+            self._cos_cached = emb.cos().to(dtype)
+            self._sin_cached = emb.sin().to(dtype)
     
-    return tokenizer
+    def rotate_half(self, x: torch.Tensor) -> torch.Tensor:
+        x1 = x[..., : x.shape[-1] // 2]
+        x2 = x[..., x.shape[-1] // 2 :]
+        return torch.cat((-x2, x1), dim=-1)
+    
+    def apply_rotary_pos_emb(self, q: torch.Tensor, k: torch.Tensor, position_ids: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        seq_len = q.shape[-2]
+        
+        self._update_cos_sin_cache(seq_len, q.device, q.dtype)
+        
+        cos = self._cos_cached[position_ids].unsqueeze(-2)
+        sin = self._sin_cached[position_ids].unsqueeze(-2)
+        
+        q_embed = (q * cos) + (self.rotate_half(q) * sin)
+        k_embed = (k * cos) + (self.rotate_half(k) * sin)
+        
+        return q_embed, k_embed
+    
+    def forward(self, x: torch.Tensor, position_ids: torch.Tensor) -> torch.Tensor:
+        return x
+
+class T5WithRoPEAttention(nn.Module):
+    def __init__(self, config, rope_embedding):
+        super().__init__()
+        self.config = config
+        self.rope_embedding = rope_embedding
+        self.d_model = config.d_model
+        self.num_heads = config.num_heads
+        self.d_kv = config.d_kv
+        
+        self.q = nn.Linear(self.d_model, self.d_model, bias=False)
+        self.k = nn.Linear(self.d_model, self.d_model, bias=False)
+        self.v = nn.Linear(self.d_model, self.d_model, bias=False)
+        self.o = nn.Linear(self.d_model, self.d_model, bias=False)
+        
+        self.dropout = nn.Dropout(config.dropout_rate)
+    
+    def forward(self, hidden_states, attention_mask=None, position_ids=None):
+        batch_size, seq_len = hidden_states.shape[:2]
+        
+        query_states = self.q(hidden_states)
+        key_states = self.k(hidden_states)
+        value_states = self.v(hidden_states)
+        
+        query_states = query_states.view(batch_size, seq_len, self.num_heads, self.d_kv).transpose(1, 2)
+        key_states = key_states.view(batch_size, seq_len, self.num_heads, self.d_kv).transpose(1, 2)
+        value_states = value_states.view(batch_size, seq_len, self.num_heads, self.d_kv).transpose(1, 2)
+        
+        if position_ids is None:
+            position_ids = torch.arange(seq_len, device=hidden_states.device).unsqueeze(0).expand(batch_size, -1)
+        
+        query_states, key_states = self.rope_embedding.apply_rotary_pos_emb(
+            query_states, key_states, position_ids
+        )
+        
+        attention_scores = torch.matmul(query_states, key_states.transpose(-1, -2))
+        attention_scores = attention_scores / math.sqrt(self.d_kv)
+        
+        if attention_mask is not None:
+            attention_scores += attention_mask
+        
+        attention_probs = F.softmax(attention_scores, dim=-1)
+        attention_probs = self.dropout(attention_probs)
+        
+        context_states = torch.matmul(attention_probs, value_states)
+        
+        context_states = context_states.transpose(1, 2).contiguous()
+        context_states = context_states.view(batch_size, seq_len, self.d_model)
+        
+        output = self.o(context_states)
+        
+        return output
