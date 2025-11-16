@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 
 import os
 import torch
@@ -10,7 +10,6 @@ import re
 from datetime import datetime
 
 def extract_training_history_from_checkpoint(checkpoint_path):
-    """Extract training history from model checkpoint."""
     try:
         checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
         
@@ -39,7 +38,6 @@ def extract_training_history_from_checkpoint(checkpoint_path):
         return None
 
 def parse_history_file(history_file_path):
-    """Parse training history from text file."""
     history_data = {
         'iterations': [],
         'train_losses': [],
@@ -96,7 +94,6 @@ def parse_history_file(history_file_path):
         return None
 
 def create_training_plots(history_data, save_dir="plots"):
-    """Create comprehensive training plots."""
     os.makedirs(save_dir, exist_ok=True)
     
     if not history_data or not history_data.get('iterations'):
@@ -195,7 +192,6 @@ def create_training_plots(history_data, save_dir="plots"):
     plt.show()
 
 def create_summary_report(history_data, save_dir="plots"):
-    """Create a summary report of training metrics."""
     if not history_data or not history_data.get('iterations'):
         print("No training history data available for summary")
         return
@@ -255,7 +251,6 @@ def create_summary_report(history_data, save_dir="plots"):
     print(f"Training summary report saved: {report_path}")
 
 def main():
-    """Main function to extract and plot training metrics."""
     print("Training Metrics Plotter")
     print("=" * 40)
     

@@ -12,44 +12,70 @@ except ImportError:
     TRANSFORMERS_AVAILABLE = False
 
 class ImprovedTokenizer:
+    
     def __init__(self, config: ImprovedConfig):
         self.config = config
         
         if TRANSFORMERS_AVAILABLE:
             try:
+                print(f"Loading pre-trained mT5 tokenizer: {config.pretrained_model_name}")
+
                 from transformers import MT5Tokenizer
                 self.tokenizer = MT5Tokenizer.from_pretrained(config.pretrained_model_name)
                 
+
                 self.config.vocab_size = len(self.tokenizer)
                 
+
                 self.config.pad_token_id = self.tokenizer.pad_token_id
                 self.config.unk_token_id = self.tokenizer.unk_token_id
                 self.config.bos_token_id = self.tokenizer.pad_token_id
                 self.config.eos_token_id = self.tokenizer.eos_token_id
                 
+                print(f"Pre-trained mT5 tokenizer loaded successfully")
+                
+
                 test_odia = "ମୁଁ ଭଲ ଅଛି"
                 test_tokens = self.tokenizer.encode(test_odia)
                 test_decoded = self.tokenizer.decode(test_tokens, skip_special_tokens=True)
+                print(f" Odia test: '{test_odia}' -> tokens: {test_tokens[:5]}... -> '{test_decoded}'")
                 
+
                 unk_count = sum(1 for token_id in test_tokens if token_id == self.tokenizer.unk_token_id)
+                if unk_count > 0:
+                    print(f" WARNING: {unk_count} unknown tokens in Odia test")
+                else:
+                    print(f" SUCCESS: Odia text properly tokenized")
+                print(f" Vocabulary size: {self.config.vocab_size}")
+                print(f" PAD token ID: {self.config.pad_token_id}")
+                print(f" UNK token ID: {self.config.unk_token_id}")
+                print(f" BOS token ID: {self.config.bos_token_id}")
+                print(f" EOS token ID: {self.config.eos_token_id}")
                 
                 self.use_pretrained = True
                 
             except Exception as e:
+                print(f"WARNING: Failed to load pre-trained mT5 tokenizer: {e}")
+                print("Trying T5 tokenizer as fallback...")
                 try:
                     self.tokenizer = T5Tokenizer.from_pretrained("t5-small")
+                    print("T5 tokenizer loaded as fallback (may not support Odia well)")
                     self.use_pretrained = True
                 except:
+                    print("Falling back to simple tokenizer...")
                     self.use_pretrained = False
                     self._create_simple_tokenizer()
         else:
+            print("Transformers not available, using simple tokenizer...")
             self.use_pretrained = False
             self._create_simple_tokenizer()
     
     def _create_simple_tokenizer(self):
+
         self.vocab = {'[PAD]': 0, '[UNK]': 1, '[BOS]': 2, '[EOS]': 3}
         self.id_to_token = {0: '[PAD]', 1: '[UNK]', 2: '[BOS]', 3: '[EOS]'}
         
+
         chars = list('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?;: ')
         odia_chars = ['ମ', 'ୁ', 'ଁ', 'ଭ', 'ଲ', 'ଅ', 'ଛ', 'ି', 'ତ', 'ୁ', 'ର', 'ନ', 'ା', 'କ', 'ଣ', 'ଆ', 'ଜ', 'ବ', 'ହ', 'ୱ', 'ସ', 'ୟ', 'ଗ', 'ପ', 'ଦ', 'ଘ', 'ଡ', 'ଢ', 'ଫ', 'ଧ', 'ଥ', 'ଶ', 'ଷ', 'ଇ', 'ଈ', 'ଉ', 'ଊ', 'ଋ', 'ଏ', 'ଐ', 'ଓ', 'ଔ', '୍', 'ଂ', 'ଃ', '଼', '।', '॥']
         
@@ -61,9 +87,11 @@ class ImprovedTokenizer:
                 current_id += 1
         
         self.config.vocab_size = len(self.vocab)
+        print(f"Simple tokenizer created with vocab size: {self.config.vocab_size}")
     
     def tokenize(self, text: str, max_length: Optional[int] = None) -> List[int]:
         if self.use_pretrained:
+
             tokens = self.tokenizer.encode(
                 text,
                 add_special_tokens=False,
@@ -73,6 +101,7 @@ class ImprovedTokenizer:
             )
             return tokens
         else:
+
             tokens = []
             for char in text:
                 if char in self.vocab:
@@ -150,55 +179,3 @@ class RoPEPositionalEmbedding(nn.Module):
     
     def forward(self, x: torch.Tensor, position_ids: torch.Tensor) -> torch.Tensor:
         return x
-
-class T5WithRoPEAttention(nn.Module):
-    def __init__(self, config, rope_embedding):
-        super().__init__()
-        self.config = config
-        self.rope_embedding = rope_embedding
-        self.d_model = config.d_model
-        self.num_heads = config.num_heads
-        self.d_kv = config.d_kv
-        
-        self.q = nn.Linear(self.d_model, self.d_model, bias=False)
-        self.k = nn.Linear(self.d_model, self.d_model, bias=False)
-        self.v = nn.Linear(self.d_model, self.d_model, bias=False)
-        self.o = nn.Linear(self.d_model, self.d_model, bias=False)
-        
-        self.dropout = nn.Dropout(config.dropout_rate)
-    
-    def forward(self, hidden_states, attention_mask=None, position_ids=None):
-        batch_size, seq_len = hidden_states.shape[:2]
-        
-        query_states = self.q(hidden_states)
-        key_states = self.k(hidden_states)
-        value_states = self.v(hidden_states)
-        
-        query_states = query_states.view(batch_size, seq_len, self.num_heads, self.d_kv).transpose(1, 2)
-        key_states = key_states.view(batch_size, seq_len, self.num_heads, self.d_kv).transpose(1, 2)
-        value_states = value_states.view(batch_size, seq_len, self.num_heads, self.d_kv).transpose(1, 2)
-        
-        if position_ids is None:
-            position_ids = torch.arange(seq_len, device=hidden_states.device).unsqueeze(0).expand(batch_size, -1)
-        
-        query_states, key_states = self.rope_embedding.apply_rotary_pos_emb(
-            query_states, key_states, position_ids
-        )
-        
-        attention_scores = torch.matmul(query_states, key_states.transpose(-1, -2))
-        attention_scores = attention_scores / math.sqrt(self.d_kv)
-        
-        if attention_mask is not None:
-            attention_scores += attention_mask
-        
-        attention_probs = F.softmax(attention_scores, dim=-1)
-        attention_probs = self.dropout(attention_probs)
-        
-        context_states = torch.matmul(attention_probs, value_states)
-        
-        context_states = context_states.transpose(1, 2).contiguous()
-        context_states = context_states.view(batch_size, seq_len, self.d_model)
-        
-        output = self.o(context_states)
-        
-        return output

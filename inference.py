@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 
 import os
 import torch
@@ -37,7 +37,7 @@ class OdiaTranslator:
         print("Loading Odia-English Translation Model")
         print(f"Device: {self.device}")
         
-        # Load tokenizer
+
         try:
             self.tokenizer = MT5Tokenizer.from_pretrained('google/mt5-small')
             print("MT5Tokenizer loaded")
@@ -45,7 +45,7 @@ class OdiaTranslator:
             print(f"Failed to load tokenizer: {e}")
             return
         
-        # Load base model
+
         try:
             self.model = T5TranslationModel('google/mt5-small')
             print("Base model loaded")
@@ -53,19 +53,19 @@ class OdiaTranslator:
             print(f"Failed to load base model: {e}")
             return
         
-        # Load trained weights
+
         if os.path.exists(self.model_path):
             try:
                 print(f"Loading weights from: {self.model_path}")
                 
-                # Load the extracted weights (should be clean)
+
                 checkpoint = torch.load(self.model_path, map_location='cpu', weights_only=False)
                 
                 if 'model_state_dict' in checkpoint:
                     state_dict = checkpoint['model_state_dict']
                     print(f"Found {len(state_dict)} model parameters")
                     
-                    # Load weights into the T5 model (these should be clean T5 weights)
+
                     missing_keys, unexpected_keys = self.model.t5_model.load_state_dict(state_dict, strict=False)
                     
                     if missing_keys:
@@ -76,7 +76,7 @@ class OdiaTranslator:
                     self.weights_loaded = True
                     print("Trained weights loaded successfully")
                     
-                    # Show training info if available
+
                     try:
                         if isinstance(checkpoint, dict):
                             if 'current_epoch' in checkpoint:
@@ -84,7 +84,7 @@ class OdiaTranslator:
                             if 'best_val_loss' in checkpoint:
                                 print(f"Best val loss: {checkpoint['best_val_loss']:.4f}")
                     except:
-                        pass  # Skip if training info not available
+                        pass
                 
                 else:
                     print("No model_state_dict found in checkpoint")
@@ -96,7 +96,7 @@ class OdiaTranslator:
             print(f"Model file not found: {self.model_path}")
             print("Using base model weights")
         
-        # Move to device and set eval mode
+
         self.model.to(self.device)
         self.model.eval()
         
@@ -109,10 +109,10 @@ class OdiaTranslator:
         if not self.model or not self.tokenizer:
             return "Model not loaded properly"
         
-        # Use the exact same task prefix as during training
+
         input_text = f"translate Odia to English: {odia_text}"
         
-        # Tokenize
+
         input_ids = self.tokenizer.encode(
             input_text,
             max_length=128,
@@ -120,7 +120,7 @@ class OdiaTranslator:
             return_tensors="pt"
         ).to(self.device)
         
-        # Generate translation
+
         try:
             with torch.no_grad():
                 output_ids = self.model.generate(
@@ -137,13 +137,13 @@ class OdiaTranslator:
                     length_penalty=1.0
                 )
             
-            # Decode
+
             translation = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
             
-            # Clean up the output
+
             translation = translation.strip()
             
-            # Remove any remaining task prefix if it appears in output
+
             if translation.startswith("translate Odia to English:"):
                 translation = translation[26:].strip()
             
@@ -183,7 +183,7 @@ class OdiaTranslator:
             generated_english = self.translate(odia_text)
             print(f"   Generated: {generated_english}")
             
-            # Simple similarity check
+
             if generated_english and not generated_english.startswith("❌"):
                 gen_words = set(generated_english.lower().split())
                 exp_words = set(expected_english.lower().split())
@@ -202,7 +202,7 @@ class OdiaTranslator:
         print(f"\n{'='*60}")
         print("Testing completed")
 
-# Global translator instance
+
 _translator = None
 
 def get_translator():

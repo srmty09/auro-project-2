@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,7 +6,6 @@ from collections import Counter
 import re
 
 def calculate_bleu_score(reference, candidate, n=4):
-    """Calculate BLEU score between reference and candidate translations."""
     
     def get_ngrams(text, n):
         words = text.lower().split()
@@ -28,7 +27,7 @@ def calculate_bleu_score(reference, candidate, n=4):
         
         return clipped_counts / total_counts if total_counts > 0 else 0.0
     
-    # Calculate precision for n-grams from 1 to n
+
     precisions = []
     for i in range(1, n + 1):
         ref_ngrams = get_ngrams(reference, i)
@@ -36,7 +35,7 @@ def calculate_bleu_score(reference, candidate, n=4):
         precision = calculate_precision(ref_ngrams, cand_ngrams)
         precisions.append(precision)
     
-    # Brevity penalty
+
     ref_len = len(reference.split())
     cand_len = len(candidate.split())
     
@@ -45,7 +44,7 @@ def calculate_bleu_score(reference, candidate, n=4):
     else:
         bp = np.exp(1 - ref_len / cand_len) if cand_len > 0 else 0.0
     
-    # BLEU score calculation
+
     if all(p > 0 for p in precisions):
         bleu = bp * np.exp(np.mean([np.log(p) for p in precisions]))
     else:
@@ -54,7 +53,6 @@ def calculate_bleu_score(reference, candidate, n=4):
     return bleu, precisions
 
 def calculate_word_overlap(reference, candidate):
-    """Calculate word overlap similarity."""
     ref_words = set(reference.lower().split())
     cand_words = set(candidate.lower().split())
     
@@ -69,30 +67,29 @@ def calculate_word_overlap(reference, candidate):
     return len(intersection) / len(union)
 
 def evaluate_model_translations():
-    """Evaluate the model translations against correct references."""
     
-    # Original Odia sentences
+
     odia_sentences = [
         "ଏହି ଟେଲିଭିଜନ ପୁରସ୍କାର ସମାରୋହ 2021 କାର୍ଯ୍ୟକ୍ରମ ତୁଳନାରେ ପ୍ରାୟ 1.5 ନିୟୁତ ଦର୍ଶକଙ୍କୁ ହରାଇଥିଲା ।",
         "ପୂର୍ବରେ ଋଷିଆ ସେନା ବିରୋଧରେ ୟୁକ୍ରେନୀୟ ସେନା ପକ୍ଷରୁ ଜାରି ହୋଇଥିବା ପ୍ରତିଆକ୍ରମଣରେ ନୂଆ ସଫଳତା ମିଳିଛି ।",
         "ଏମଏଲବି ଖେଳାଳି ସଂଘ ଶେଷରେ ଏଏଫଏଲ-ସିଆଇଓର ସଦସ୍ୟ ହେବ ଏବଂ ବିଭିନ୍ନ ଶିଳ୍ପର ଅନ୍ୟ ୫୭ଟି ସଂଘ ସହିତ ଯୋଡ଼ି ହେବ ।"
     ]
     
-    # Model generated translations (from output.txt)
+
     model_translations = [
         "The telescope created nearly 1.5 million viewers in the 2021 program.",
         "There's a new success in the Russia military against the Russian force, said the U.S. government.",
         "The MLB Players Association will be a member of the AFL-CIO and another 75 other unions with other projects."
     ]
     
-    # Correct reference translations
+
     reference_translations = [
         "The television awards ceremony lost roughly 1.5 million viewers compared to its 2021 program.",
         "Ukrainian forces are claiming new success in their counteroffensive against Russian forces in the east.",
         "The MLB Players Association will finally be a member of the AFL-CIO, affiliating with 57 other unions across industries."
     ]
     
-    # Calculate metrics for each translation
+
     results = []
     for i, (odia, model, reference) in enumerate(zip(odia_sentences, model_translations, reference_translations)):
         bleu_score, precisions = calculate_bleu_score(reference, model)
@@ -112,7 +109,6 @@ def evaluate_model_translations():
     return results
 
 def create_evaluation_plots(results, save_dir="evaluation_plots"):
-    """Create comprehensive evaluation plots."""
     import os
     os.makedirs(save_dir, exist_ok=True)
     
@@ -120,7 +116,7 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     bleu_scores = [r['bleu_score'] for r in results]
     word_overlaps = [r['word_overlap'] for r in results]
     
-    # Extract precision scores for different n-grams
+
     precisions_1gram = [r['precisions'][0] for r in results]
     precisions_2gram = [r['precisions'][1] for r in results]
     precisions_3gram = [r['precisions'][2] for r in results]
@@ -128,11 +124,11 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     
     plt.style.use('default')
     
-    # Create comprehensive evaluation plot
+
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
     fig.suptitle('Translation Quality Evaluation', fontsize=16, fontweight='bold')
     
-    # BLEU Scores
+
     ax1 = axes[0, 0]
     bars1 = ax1.bar(sentence_ids, bleu_scores, color='skyblue', alpha=0.7, edgecolor='navy')
     ax1.set_xlabel('Sentence ID')
@@ -141,13 +137,13 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     ax1.set_ylim(0, 1)
     ax1.grid(True, alpha=0.3)
     
-    # Add value labels on bars
+
     for bar, score in zip(bars1, bleu_scores):
         height = bar.get_height()
         ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
                 f'{score:.3f}', ha='center', va='bottom', fontweight='bold')
     
-    # Word Overlap
+
     ax2 = axes[0, 1]
     bars2 = ax2.bar(sentence_ids, word_overlaps, color='lightgreen', alpha=0.7, edgecolor='darkgreen')
     ax2.set_xlabel('Sentence ID')
@@ -156,13 +152,13 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     ax2.set_ylim(0, 1)
     ax2.grid(True, alpha=0.3)
     
-    # Add value labels on bars
+
     for bar, score in zip(bars2, word_overlaps):
         height = bar.get_height()
         ax2.text(bar.get_x() + bar.get_width()/2., height + 0.01,
                 f'{score:.3f}', ha='center', va='bottom', fontweight='bold')
     
-    # N-gram Precisions
+
     ax3 = axes[1, 0]
     x = np.arange(len(sentence_ids))
     width = 0.2
@@ -181,7 +177,7 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     ax3.grid(True, alpha=0.3)
     ax3.set_ylim(0, 1)
     
-    # Overall Performance Summary
+
     ax4 = axes[1, 1]
     avg_bleu = np.mean(bleu_scores)
     avg_overlap = np.mean(word_overlaps)
@@ -196,7 +192,7 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     ax4.set_ylim(0, 1)
     ax4.grid(True, alpha=0.3)
     
-    # Add value labels
+
     for bar, value in zip(bars4, values):
         height = bar.get_height()
         ax4.text(bar.get_x() + bar.get_width()/2., height + 0.01,
@@ -207,10 +203,10 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print(f"Evaluation plot saved: {plot_path}")
     
-    # Create detailed comparison plot
+
     fig2, ax = plt.subplots(1, 1, figsize=(14, 8))
     
-    # Combined score (weighted average of BLEU and word overlap)
+
     combined_scores = [0.7 * bleu + 0.3 * overlap for bleu, overlap in zip(bleu_scores, word_overlaps)]
     
     x = np.arange(len(sentence_ids))
@@ -229,7 +225,7 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     ax.grid(True, alpha=0.3)
     ax.set_ylim(0, 1)
     
-    # Add value labels on bars
+
     for bars in [bars1, bars2, bars3]:
         for bar in bars:
             height = bar.get_height()
@@ -244,7 +240,6 @@ def create_evaluation_plots(results, save_dir="evaluation_plots"):
     plt.show()
 
 def create_evaluation_report(results, save_dir="evaluation_plots"):
-    """Create a detailed evaluation report."""
     import os
     os.makedirs(save_dir, exist_ok=True)
     
@@ -254,7 +249,7 @@ def create_evaluation_report(results, save_dir="evaluation_plots"):
         f.write("TRANSLATION QUALITY EVALUATION REPORT\n")
         f.write("=" * 60 + "\n\n")
         
-        # Overall statistics
+
         bleu_scores = [r['bleu_score'] for r in results]
         word_overlaps = [r['word_overlap'] for r in results]
         
@@ -265,7 +260,7 @@ def create_evaluation_report(results, save_dir="evaluation_plots"):
         f.write(f"Best BLEU Score: {max(bleu_scores):.4f} (Sentence {bleu_scores.index(max(bleu_scores)) + 1})\n")
         f.write(f"Worst BLEU Score: {min(bleu_scores):.4f} (Sentence {bleu_scores.index(min(bleu_scores)) + 1})\n\n")
         
-        # Detailed results for each sentence
+
         f.write("DETAILED SENTENCE ANALYSIS:\n")
         f.write("=" * 60 + "\n\n")
         
@@ -283,7 +278,7 @@ def create_evaluation_report(results, save_dir="evaluation_plots"):
             f.write(f"4-gram Precision: {result['precisions'][3]:.4f}\n")
             f.write("\n" + "=" * 60 + "\n\n")
         
-        # Analysis and recommendations
+
         f.write("ANALYSIS AND RECOMMENDATIONS:\n")
         f.write("-" * 40 + "\n")
         
@@ -311,14 +306,13 @@ def create_evaluation_report(results, save_dir="evaluation_plots"):
     print(f"Evaluation report saved: {report_path}")
 
 def main():
-    """Main evaluation function."""
     print("Translation Quality Evaluation")
     print("=" * 50)
     
-    # Evaluate translations
+
     results = evaluate_model_translations()
     
-    # Print summary
+
     print(f"\nEvaluated {len(results)} translations:")
     for result in results:
         print(f"Sentence {result['sentence_id']}: BLEU={result['bleu_score']:.3f}, Overlap={result['word_overlap']:.3f}")
@@ -330,7 +324,7 @@ def main():
     print(f"Average BLEU Score: {avg_bleu:.3f}")
     print(f"Average Word Overlap: {avg_overlap:.3f}")
     
-    # Create plots and report
+
     create_evaluation_plots(results)
     create_evaluation_report(results)
     
